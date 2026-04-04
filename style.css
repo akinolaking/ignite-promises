@@ -498,11 +498,11 @@ width:100%;
 }
 
 input{
-width:118px;
-max-width:118px;
-padding:4px 8px;
-font-size:0.78rem;
-line-height:1;
+width:60px;
+max-width:60px;
+padding:2px 6px;
+font-size:0.98rem;
+line-height:1.1;
 text-align:center;
 box-shadow:4px 4px 0 rgba(69,16,143,0.82);
 }
@@ -607,11 +607,11 @@ font-size:0.94rem;
 }
 
 input{
-width:104px;
-max-width:104px;
-padding:3px 8px;
-font-size:0.74rem;
-line-height:1;
+width:52px;
+max-width:52px;
+padding:2px 5px;
+font-size:0.9rem;
+line-height:1.05;
 }
 
 button{
