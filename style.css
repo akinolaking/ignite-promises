@@ -182,10 +182,10 @@ z-index:1;
 }
 
 input{
-flex:0 1 260px;
-width:min(100%, 260px);
+flex:0 1 286px;
+width:min(100%, 286px);
 min-width:0;
-padding:18px 14px;
+padding:2px 14px;
 font:inherit;
 font-size:1rem;
 font-weight:600;
@@ -498,9 +498,12 @@ width:100%;
 }
 
 input{
-width:min(100%, 260px);
-padding:13px 14px;
-font-size:0.92rem;
+width:118px;
+max-width:118px;
+padding:4px 8px;
+font-size:0.78rem;
+line-height:1;
+text-align:center;
 box-shadow:4px 4px 0 rgba(69,16,143,0.82);
 }
 
@@ -604,9 +607,11 @@ font-size:0.94rem;
 }
 
 input{
-width:min(100%, 220px);
-padding:12px 12px;
-font-size:0.82rem;
+width:104px;
+max-width:104px;
+padding:3px 8px;
+font-size:0.74rem;
+line-height:1;
 }
 
 button{
