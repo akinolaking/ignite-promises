@@ -500,7 +500,8 @@ width:100%;
 #feelingInput{
 -webkit-appearance:none;
 appearance:none;
-flex:0 0 210px !important;
+display:block;
+flex:none;
 width:210px !important;
 max-width:210px !important;
 min-width:210px !important;
@@ -508,16 +509,18 @@ height:22px !important;
 min-height:22px !important;
 max-height:22px !important;
 padding:0 10px !important;
+margin:0 auto;
 font-size:16px !important;
-line-height:1 !important;
+line-height:22px !important;
 text-align:left;
-border-width:3px;
-border-radius:12px;
+border:2px solid var(--outline) !important;
+border-radius:10px !important;
 box-shadow:4px 4px 0 rgba(69,16,143,0.82);
 }
 
 #feelingInput::placeholder{
 font-size:11px;
+line-height:22px;
 letter-spacing:0.01em;
 }
 
@@ -621,7 +624,6 @@ font-size:0.94rem;
 }
 
 #feelingInput{
-flex:0 0 190px !important;
 width:190px !important;
 max-width:190px !important;
 min-width:190px !important;
@@ -630,11 +632,12 @@ min-height:22px !important;
 max-height:22px !important;
 padding:0 8px !important;
 font-size:16px !important;
-line-height:1 !important;
+line-height:22px !important;
 }
 
 #feelingInput::placeholder{
 font-size:10px;
+line-height:22px;
 }
 
 button{
