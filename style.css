@@ -624,15 +624,15 @@ font-size:0.94rem;
 }
 
 #feelingInput{
-width:250px !important;
-max-width:250px !important;
-min-width:250px !important;
-height:48px !important;
-min-height:48px !important;
-max-height:48px !important;
+width:290px !important;
+max-width:290px !important;
+min-width:290px !important;
+height:58px !important;
+min-height:58px !important;
+max-height:58px !important;
 padding:0 8px !important;
 font-size:18px !important;
-line-height:48px !important;
+line-height:58px !important;
 }
 
 #feelingInput::placeholder{
