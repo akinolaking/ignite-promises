@@ -498,14 +498,19 @@ width:100%;
 }
 
 input{
-width:180px;
-max-width:180px;
-padding:0 8px;
-font-size:0.76rem;
-line-height:0.9;
-height:18px;
+width:210px;
+max-width:210px;
+padding:0 12px;
+font-size:1rem;
+line-height:1;
+height:56px;
 text-align:left;
 box-shadow:4px 4px 0 rgba(69,16,143,0.82);
+}
+
+input::placeholder{
+font-size:0.78rem;
+letter-spacing:0.01em;
 }
 
 button{
@@ -608,13 +613,17 @@ font-size:0.94rem;
 }
 
 input{
-width:160px;
-max-width:160px;
-padding:0 7px;
-font-size:0.72rem;
-line-height:0.9;
-height:17px;
+width:190px;
+max-width:190px;
+padding:0 10px;
+font-size:0.95rem;
+line-height:1;
+height:52px;
 text-align:left;
+}
+
+input::placeholder{
+font-size:0.72rem;
 }
 
 button{
