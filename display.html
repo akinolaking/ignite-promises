@@ -1,0 +1,40 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Word Cloud Display</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Bungee&family=Changa:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=20260401b">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="display-screen">
+
+<div class="bg-panel panel-one"></div>
+<div class="bg-panel panel-two"></div>
+<div class="bg-panel panel-three"></div>
+<div class="bg-orb orb-one"></div>
+<div class="bg-orb orb-two"></div>
+<div class="bg-orb orb-three"></div>
+<div class="bg-ring ring-one"></div>
+<div class="bg-ring ring-two"></div>
+
+<main class="page-shell">
+<section class="container card card-wide display-card">
+<div class="brand-row">
+<img class="ignite-logo" src="ignite%20logo%20-%20wordmark%20%28black%29.PNG" alt="Ignite!">
+</div>
+<p class="eyebrow section-tag">Shared Responses</p>
+<p class="intro">A living snapshot of what people are carrying right now.</p>
+<div id="cloud" aria-live="polite"></div>
+</section>
+</main>
+
+<script src="config.js?v=20260401b"></script>
+<script src="display.js?v=20260401b"></script>
+
+</body>
+</html>

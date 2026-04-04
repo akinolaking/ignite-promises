@@ -1,0 +1,51 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reflection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Bungee&family=Changa:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=20260401b">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<div class="bg-panel panel-one"></div>
+<div class="bg-panel panel-two"></div>
+<div class="bg-panel panel-three"></div>
+<div class="bg-orb orb-one"></div>
+<div class="bg-orb orb-two"></div>
+<div class="bg-orb orb-three"></div>
+<div class="bg-ring ring-one"></div>
+<div class="bg-ring ring-two"></div>
+
+<main class="page-shell">
+<section class="container card">
+<div class="brand-row">
+<img class="ignite-logo" src="ignite%20logo%20-%20wordmark%20%28black%29.PNG" alt="Ignite!">
+</div>
+<p class="eyebrow section-tag">Easter at Ignite</p>
+<p class="intro">What heavy burden are you carrying?</p>
+
+<div id="inputArea" class="input-area">
+<label class="sr-only" for="feelingInput">Reflection prompt response</label>
+<input id="feelingInput" placeholder="Type one word only" maxlength="30" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" pattern="[^\s]+" inputmode="text" oninput="this.value=this.value.replace(/\s+/g,'')"/>
+<button type="button" onclick="submitFeeling()"> Exchange 🔁 </button>
+</div>
+
+<div id="promiseBox" class="message-card hidden" aria-live="polite">
+<p class="eyebrow">Promise</p>
+<p id="promiseText"></p>
+<p class="screenshot-note">Take a screenshot and keep this with you.</p>
+</div>
+</section>
+</main>
+
+<script src="config.js?v=20260401b"></script>
+<script src="submit.js?v=20260401b"></script>
+
+</body>
+</html>
