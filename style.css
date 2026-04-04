@@ -134,9 +134,9 @@ z-index:1;
 
 .section-tag{
 display:inline-block;
-padding:12px 18px 10px;
+padding:14px 22px 12px;
 font-family:"Bungee",sans-serif;
-font-size:clamp(1.15rem, 3vw, 1.85rem);
+font-size:clamp(1.5rem, 3.9vw, 2.4rem);
 line-height:1;
 letter-spacing:0.02em;
 color:var(--white);
@@ -182,12 +182,12 @@ z-index:1;
 }
 
 input{
-flex:1 1 320px;
-width:100%;
+flex:0 1 220px;
+width:min(100%, 220px);
 min-width:0;
-padding:18px 20px;
+padding:12px 14px;
 font:inherit;
-font-size:1.2rem;
+font-size:1rem;
 font-weight:600;
 color:var(--ink);
 background:rgba(255,255,255,0.98);
@@ -477,8 +477,8 @@ margin-bottom:10px;
 }
 
 .section-tag{
-padding:10px 14px 8px;
-font-size:0.96rem;
+padding:12px 16px 10px;
+font-size:1.24rem;
 box-shadow:4px 4px 0 var(--outline);
 }
 
@@ -498,8 +498,8 @@ width:100%;
 }
 
 input{
-width:min(100%, 260px);
-padding:13px 14px;
+width:min(100%, 180px);
+padding:10px 12px;
 font-size:0.92rem;
 box-shadow:4px 4px 0 rgba(69,16,143,0.82);
 }
@@ -594,8 +594,8 @@ width:min(100%, 180px);
 }
 
 .section-tag{
-font-size:0.88rem;
-padding:8px 12px 7px;
+font-size:1.05rem;
+padding:10px 13px 8px;
 }
 
 .intro{
@@ -604,9 +604,9 @@ font-size:0.94rem;
 }
 
 input{
-width:min(100%, 220px);
-padding:12px 12px;
-font-size:0.86rem;
+width:min(100%, 156px);
+padding:9px 10px;
+font-size:0.82rem;
 }
 
 button{
