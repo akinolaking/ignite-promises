@@ -185,7 +185,7 @@ input{
 flex:0 1 286px;
 width:min(100%, 286px);
 min-width:0;
-padding:6px 14px;
+padding:2px 14px;
 font:inherit;
 font-size:1rem;
 font-weight:600;
@@ -499,7 +499,7 @@ width:100%;
 
 input{
 width:min(100%, 234px);
-padding:5px 12px;
+padding:2px 12px;
 font-size:0.92rem;
 box-shadow:4px 4px 0 rgba(69,16,143,0.82);
 }
@@ -605,7 +605,7 @@ font-size:0.94rem;
 
 input{
 width:min(100%, 202px);
-padding:5px 10px;
+padding:2px 10px;
 font-size:0.82rem;
 }
 
