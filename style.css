@@ -629,15 +629,15 @@ max-width:250px !important;
 min-width:250px !important;
 height:32px !important;
 min-height:32px !important;
-max-height:32px !important;
+max-height:38px !important;
 padding:0 8px !important;
-font-size:16px !important;
+font-size:18px !important;
 line-height:33px !important;
 }
 
 #feelingInput::placeholder{
-font-size:10px;
-line-height:22px;
+font-size:16px;
+line-height:32px;
 }
 
 button{
