@@ -637,7 +637,7 @@ line-height:58px !important;
 
 #feelingInput::placeholder{
 font-size:16px;
-line-height:48px;
+line-height:100px;
 }
 
 button{
