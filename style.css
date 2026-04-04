@@ -496,7 +496,7 @@ margin-top:20px;
 }
 
 input{
-width:min(100%, 72px);
+width:min(50%, 100px);
 padding:8px 10px;
 font-size:0.72rem;
 box-shadow:4px 4px 0 rgba(69,16,143,0.82);
