@@ -613,10 +613,10 @@ font-size:0.94rem;
 }
 
 input{
-width:190px;
-max-width:190px;
-padding:0 10px;
-font-size:0.95rem;
+width:210px;
+max-width:210px;
+padding:0 12px;
+font-size:1rem;
 line-height:1;
 height:22px;
 text-align:left;
@@ -630,36 +630,5 @@ button{
 width:min(100%, 250px);
 padding:13px 14px;
 font-size:0.86rem;
-}
-}
-
-@media (max-width:700px) and (orientation:portrait){
-#feelingInput{
-width:210px;
-max-width:210px;
-height:22px;
-padding:0 10px;
-font-size:0.92rem;
-line-height:1;
-text-align:left;
-}
-
-#feelingInput::placeholder{
-font-size:0.72rem;
-letter-spacing:0.01em;
-}
-}
-
-@media (max-width:390px) and (orientation:portrait){
-#feelingInput{
-width:190px;
-max-width:190px;
-height:22px;
-padding:0 8px;
-font-size:0.88rem;
-}
-
-#feelingInput::placeholder{
-font-size:0.68rem;
 }
 }
