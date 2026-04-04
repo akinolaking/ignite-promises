@@ -606,7 +606,7 @@ font-size:0.9rem;
 @media (max-width:350px){
 .card{
 width:100%;
-padding:20px 14px 22px;
+padding:20px 1400px 22px;
 }
 
 .ignite-logo{
@@ -637,7 +637,7 @@ line-height:58px !important;
 
 #feelingInput::placeholder{
 font-size:16px;
-line-height:100px;
+line-height:48px;
 }
 
 button{
