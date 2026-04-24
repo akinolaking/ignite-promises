@@ -56,7 +56,7 @@
     .screen {
       position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
-      padding: 16px 16px calc(var(--bot-h) + 52px);
+      padding: 16px 16px calc(var(--bot-h) + 52px + env(safe-area-inset-bottom, 0px));
       display: flex; flex-direction: column; gap: 12px;
     }
     .screen.enter-fwd  { animation: slideFwd  var(--dur) var(--ease) both; }
@@ -113,7 +113,7 @@
     .step-seg.done   .step-name { color: var(--green); }
 
     /* ── Bottom nav ── */
-    .bot-nav { height: var(--bot-h); display: flex; align-items: center; border-top: 1px solid var(--border); background: oklch(0.908 0.033 64 / 0.92); backdrop-filter: blur(20px); flex-shrink: 0; padding: 0 8px; gap: 4px; }
+    .bot-nav { height: calc(var(--bot-h) + env(safe-area-inset-bottom, 0px)); display: flex; align-items: flex-start; border-top: 1px solid var(--border); background: oklch(0.908 0.033 64 / 0.92); backdrop-filter: blur(20px); flex-shrink: 0; padding: 0 8px env(safe-area-inset-bottom, 0px); gap: 4px; }
     .bot-tab  { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 8px; border-radius: 12px; cursor: pointer; transition: background 0.15s; border: none; background: transparent; font-family: var(--ff); -webkit-tap-highlight-color: transparent; }
     .bot-tab:hover { background: var(--orange-s); }
     .bot-tab.active { background: var(--orange-s); }
@@ -281,7 +281,7 @@ if('serviceWorker' in navigator){
 window.AmbientAudio=(function(){
   let actx,master,send,playing=false,nodes=[],stopFlag=false;
   let currentMode=0,vol=0.45;
-  const MODES=[{name:'Ambient Chords'},{name:'963 Hz · Crown'},{name:'528 Hz · Love'},{name:'432 Hz · Harmony'}];
+  const MODES=[{name:'Ambient Chords',pixabay:'gospel worship ambient'},{name:'963 Hz · Crown',pixabay:'963hz frequency'},{name:'528 Hz · Love',pixabay:'528hz frequency'},{name:'432 Hz · Harmony',pixabay:'432hz frequency meditation'}];
   const FREQS=[null,963,528,432];
   const CHORDS=[[1,1.2247,1.5,1.8371],[1,1.25,1.5,2],[0.8889,1,1.3333,1.6667],[1,1.125,1.3333,1.6667]];
 
@@ -366,7 +366,7 @@ window.AmbientAudio=(function(){
     if(master)master.gain.setTargetAtTime(vol,actx.currentTime,0.1);
   }
 
-  return{start,stop,nextMode,setVol,getVol:()=>vol,getModeName:()=>MODES[currentMode].name,isPlaying:()=>playing};
+  return{start,stop,nextMode,setVol,getVol:()=>vol,getModeName:()=>MODES[currentMode].name,getPixabayQ:()=>MODES[currentMode].pixabay,isPlaying:()=>playing};
 })();
 </script>
 
@@ -394,6 +394,23 @@ const CATEGORIES={
   identity: {label:'Identity & Worth',  color:'chip-o',words:['ashamed','guilty','unworthy','rejected','insecure','worthless','shame','condemned','unloved','unwanted']},
   purpose:  {label:'Purpose & Direction',color:'chip-t',words:['confused','directionless','purposeless','uncertain','unclear','stuck','wandering','unsure']},
 };
+// ── Bible API ─────────────────────────────────────────────────────────────
+const BIBLE_ID='9879dbb7cfe39e4d-01'; // World English Bible (open license)
+const BIBLE_KEY='h0hLHgidrzSUzGNMjAidY';
+const VERSE_IDS={fear:'ISA.41.10',grief:'PSA.34.18',hope:'JER.29.11',peace:'NUM.6.24',financial:'PHP.4.19',identity:'PSA.139.14',purpose:'PRO.3.5',general:'MAT.11.28'};
+async function fetchBibleVerse(verseId){
+  const k=`bv_${verseId}`;
+  try{const c=sessionStorage.getItem(k);if(c)return JSON.parse(c);}catch(e){}
+  try{
+    const r=await fetch(`https://rest.api.bible/v1/bibles/${BIBLE_ID}/verses/${verseId}?content-type=text&include-verse-numbers=false`,{headers:{'api-key':BIBLE_KEY}});
+    if(!r.ok)return null;
+    const d=await r.json();
+    const result={text:'"'+d.data.content.replace(/\s+/g,' ').trim()+'"',ref:d.data.reference};
+    try{sessionStorage.setItem(k,JSON.stringify(result));}catch(e){}
+    return result;
+  }catch(e){return null;}
+}
+
 const AFFIRMATIONS={
   fear:     {verse:'"Fear not, for I am with you; be not dismayed, for I am your God. I will strengthen you, yes, I will help you, I will uphold you with My righteous right hand."',ref:'Isaiah 41:10'},
   grief:    {verse:'"The Lord is close to the broken-hearted and saves those who are crushed in spirit."',ref:'Psalm 34:18'},
@@ -704,6 +721,15 @@ function CheckIn({onNext,profile,history,dir}){
 // ── Affirmation ───────────────────────────────────────────────────────────
 function Affirmation({feeling,category,onPrayer,onMusic,streak,dir}){
   const aff=AFFIRMATIONS[category]||AFFIRMATIONS.general,cat=CATEGORIES[category],mil=getMilestone(streak.current);
+  const [liveVerse,setLiveVerse]=useState(null);
+  const [liveRef,setLiveRef]=useState(null);
+  useEffect(()=>{
+    const vid=VERSE_IDS[category];
+    if(!vid)return;
+    fetchBibleVerse(vid).then(r=>{if(r){setLiveVerse(r.text);setLiveRef(r.ref);}});
+  },[category]);
+  const verse=liveVerse||aff.verse;
+  const ref=liveRef||aff.ref;
   return(
     <div className={`screen enter-${dir}`} data-screen-label="02 Promise">
       <div className="a-fade" style={{display:'flex',alignItems:'center',gap:7,flexWrap:'wrap',paddingLeft:2}}>
@@ -712,9 +738,12 @@ function Affirmation({feeling,category,onPrayer,onMusic,streak,dir}){
         {cat&&<span className={`chip ${cat.color}`}>We heard: {cat.label}</span>}
       </div>
       <div className="card card-hi a-up d1">
-        <span className="chip chip-y" style={{marginBottom:16,display:'inline-flex'}}>Your Promise</span>
-        <p className="scripture">{aff.verse}</p>
-        <p className="scrip-ref">— {aff.ref}</p>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
+          <span className="chip chip-y" style={{display:'inline-flex'}}>Your Promise</span>
+          {liveVerse&&<span style={{fontSize:9,color:'var(--green)',fontWeight:600,letterSpacing:'0.06em',textTransform:'uppercase'}}>WEB · Live</span>}
+        </div>
+        <p className="scripture">{verse}</p>
+        <p className="scrip-ref">— {ref}</p>
       </div>
       {streak.current===1?(
         <div className="card card-orange a-pop"><span className="cel-icon">🌱</span><p style={{fontWeight:600,fontSize:16,marginBottom:4}}>First Promise received.</p><p style={{fontSize:13,color:'var(--t2)',fontWeight:300}}>Day one of something beautiful.</p></div>
@@ -855,7 +884,7 @@ function Share({feeling,category,profile,onRestart,dir}){
       {storyPreview&&(
         <div className="story-overlay">
           <div className="story-bars">
-            {[1,2,3].map((n,i)=><div key={i} className="story-bar"><div className="story-bar-fill" style={{width:i===0?`${storyProgress}%`:0}}/></div>)}
+            {[1,2,3].map((n,i)=><div key={i} className="story-bar"><div className="story-bar-fill" style={{width:i===0?`${storyProgress}%`:'0%',transition:i===0?'width 0.05s linear':'none'}}/></div>)}
           </div>
           <div className="story-header">
             <div className="story-avatar"/>
@@ -922,6 +951,7 @@ function Settings({profile,onUpdateProfile,onClearHistory,dir}){
   const [name,setName]=useState(profile?.name||'');
   const [denom,setDenom]=useState(profile?.denomination||'Non-denominational');
   const [cadence,setCadence]=useState(profile?.cadence||'daily');
+  const [persona,setPersona]=useState(profile?.persona||'nature');
   const [notifs,setNotifs]=useState(profile?.notifications!==false);
   const [notifStatus,setNotifStatus]=useState(()=>typeof Notification!=='undefined'?Notification.permission:'default');
   const [saved,setSaved]=useState(false);
@@ -942,7 +972,7 @@ function Settings({profile,onUpdateProfile,onClearHistory,dir}){
     } else {setNotifs(false);}
   }
 
-  function save(){const u={...profile,name:name.trim(),denomination:denom,cadence,notifications:notifs};saveProfile(u);onUpdateProfile(u);setSaved(true);setTimeout(()=>setSaved(false),2000);}
+  function save(){const u={...profile,name:name.trim(),denomination:denom,cadence,persona,notifications:notifs};saveProfile(u);onUpdateProfile(u);setSaved(true);setTimeout(()=>setSaved(false),2000);}
   function logout(){if(confirm('Sign out of Promises?')){localStorage.removeItem('promises_profile');window.location.href='Auth.html';}}
 
   return(
@@ -957,6 +987,19 @@ function Settings({profile,onUpdateProfile,onClearHistory,dir}){
           <div><p style={{fontSize:12,color:'var(--t2)',marginBottom:6}}>Your name</p><input className="inp inp-sm" value={name} onChange={e=>setName(e.target.value)} style={{width:'100%'}}/></div>
           <div><p style={{fontSize:12,color:'var(--t2)',marginBottom:6}}>Church tradition</p><select className="sel" value={denom} onChange={e=>setDenom(e.target.value)}>{DENOMINATIONS.map(d=><option key={d}>{d}</option>)}</select></div>
           <div><p style={{fontSize:12,color:'var(--t2)',marginBottom:6}}>Check-in cadence</p><select className="sel" value={cadence} onChange={e=>setCadence(e.target.value)}>{CADENCES.map(c=><option key={c.v} value={c.v}>{c.l} — {c.d}</option>)}</select></div>
+        </div>
+      </div>
+      <div className="card a-up d1" style={{marginTop:0}}>
+        <p style={{fontSize:11,fontWeight:600,color:'var(--t3)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:12}}>Sacred Space</p>
+        <p style={{fontSize:12,color:'var(--t2)',marginBottom:12,fontWeight:300}}>Your share card and story background.</p>
+        <div className="persona-grid">
+          {Object.entries(PERSONAS).map(([key,p])=>(
+            <div key={key} className={`persona-card${persona===key?' selected':''}`} style={{backgroundImage:`url(${p.img})`}} onClick={()=>setPersona(key)}>
+              <div className="persona-overlay"/>
+              <span className="persona-label">{p.emoji} {p.label}</span>
+              {persona===key&&<div className="persona-check"><svg width="10" height="10" viewBox="0 0 12 9" fill="none"><path d="M1 4.5l3.5 3.5L11 1" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg></div>}
+            </div>
+          ))}
         </div>
       </div>
       <div className="card a-up d2">
@@ -989,11 +1032,12 @@ function Settings({profile,onUpdateProfile,onClearHistory,dir}){
 }
 
 // ── Music bar ─────────────────────────────────────────────────────────────
-function MusicBar({playing,vol,modeName,onDown,onUp,onNext}){
+function MusicBar({playing,vol,modeName,pixabayQ,onDown,onUp,onNext}){
   if(!playing)return null;
   return(
     <div className="music-bar">
       <span className="mbar-mode">{modeName}</span>
+      {pixabayQ&&<a href={`https://pixabay.com/music/search/${encodeURIComponent(pixabayQ)}/`} target="_blank" rel="noopener noreferrer" style={{fontSize:9,color:'var(--teal)',textDecoration:'none',fontWeight:600,letterSpacing:'0.04em',flexShrink:0}}>Pixabay ↗</a>}
       <button className="mbar-btn" onClick={onDown}>−</button>
       <span className="mbar-vol">{Math.round(vol*100)}%</span>
       <button className="mbar-btn" onClick={onUp}>+</button>
@@ -1094,7 +1138,7 @@ function App(){
           </div>
         </nav>
 
-        <MusicBar playing={musicPlaying} vol={musicVol} modeName={modeName} onDown={volDown} onUp={volUp} onNext={nextMusicMode}/>
+        <MusicBar playing={musicPlaying} vol={musicVol} modeName={modeName} pixabayQ={musicPlaying?window.AmbientAudio.getPixabayQ():null} onDown={volDown} onUp={volUp} onNext={nextMusicMode}/>
         {inFlow&&<StepBar current={step} onStep={goStep}/>}
         {!profile?.onboardingComplete&&<Onboarding onComplete={p=>{setProfile(p);}}/>}
 
