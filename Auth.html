@@ -289,7 +289,7 @@
       }
       function submit(ev){
         ev.preventDefault();if(!validate())return;
-        setLoading(true);setTimeout(()=>{setLoading(false);onSuccess();},1800);
+        setLoading(true);setTimeout(()=>{setLoading(false);try{localStorage.setItem('promises_auth_name',name.trim());}catch(e){}onSuccess();},1800);
       }
       function googleSignUp(){setLoading(true);setTimeout(()=>onSuccess(),1400);}
 

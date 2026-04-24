@@ -44,11 +44,12 @@
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body, #root { height: 100%; font-family: var(--ff); -webkit-font-smoothing: antialiased; overflow: hidden; }
-    body { background: var(--bg); color: var(--text); }
+    body { background: var(--bg); color: var(--text); background-size: cover; background-position: center; background-attachment: fixed; }
     ::-webkit-scrollbar { width: 0; }
-    #bg-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+    #bg-overlay { position: fixed; inset: 0; z-index: 0; background: oklch(0.908 0.033 64 / 0.82); pointer-events: none; }
+    #bg-canvas { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
 
-    .app-wrap { position: relative; z-index: 1; height: 100%; display: flex; justify-content: center; }
+    .app-wrap { position: relative; z-index: 2; height: 100%; display: flex; justify-content: center; }
     .shell { width: 100%; max-width: 430px; height: 100%; display: flex; flex-direction: column; }
 
     /* ── Screen ── */
@@ -215,15 +216,16 @@
     .persona-check { position: absolute; top: 5px; right: 5px; width: 18px; height: 18px; border-radius: 50%; background: var(--orange); display: flex; align-items: center; justify-content: center; }
 
     /* ── Story simulation ── */
-    .story-overlay { position: fixed; inset: 0; z-index: 300; background: #000; display: flex; flex-direction: column; }
-    .story-bars { position: absolute; top: 10px; left: 8px; right: 8px; z-index: 10; display: flex; gap: 3px; }
+    .story-overlay { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; }
+    .story-frame { position: relative; width: 100%; max-width: 340px; aspect-ratio: 9/16; border-radius: 24px; overflow: hidden; box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06); flex-shrink: 0; }
+    .story-bars { position: absolute; top: 14px; left: 12px; right: 12px; z-index: 10; display: flex; gap: 3px; }
     .story-bar { flex: 1; height: 2.5px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden; }
     .story-bar-fill { height: 100%; background: #fff; border-radius: 2px; }
-    .story-header { position: absolute; top: 20px; left: 12px; right: 12px; z-index: 10; display: flex; align-items: center; gap: 8px; }
-    .story-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--orange), var(--orange-d)); border: 2px solid var(--orange); flex-shrink: 0; }
-    .story-close { margin-left: auto; background: none; border: none; color: rgba(255,255,255,0.8); font-size: 20px; cursor: pointer; padding: 4px; }
-    .story-reply { position: absolute; bottom: 0; left: 0; right: 0; padding: 12px 16px 36px; display: flex; gap: 12px; align-items: center; }
-    .story-reply-box { flex: 1; border: 1px solid rgba(255,255,255,0.3); border-radius: 22px; padding: 10px 16px; font-size: 14px; color: rgba(255,255,255,0.5); background: transparent; font-family: var(--ff); }
+    .story-header { position: absolute; top: 26px; left: 12px; right: 12px; z-index: 10; display: flex; align-items: center; gap: 8px; }
+    .story-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--orange), var(--orange-d)); border: 2px solid rgba(255,255,255,0.5); flex-shrink: 0; }
+    .story-close { margin-left: auto; background: none; border: none; color: rgba(255,255,255,0.9); font-size: 18px; cursor: pointer; padding: 4px 0 4px 8px; line-height: 1; }
+    .story-actions { width: 100%; max-width: 340px; display: flex; gap: 10px; align-items: center; padding: 14px 4px 0; }
+    .story-reply-box { flex: 1; border: 1.5px solid rgba(255,255,255,0.22); border-radius: 24px; padding: 11px 18px; font-size: 14px; color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.06); backdrop-filter: blur(12px); font-family: var(--ff); }
 
     /* ── Animations ── */
     @keyframes au-up   { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
@@ -237,6 +239,7 @@
   </style>
 </head>
 <body>
+<div id="bg-overlay"></div>
 <canvas id="bg-canvas"></canvas>
 <div id="root"></div>
 
@@ -258,9 +261,6 @@ if('serviceWorker' in navigator){
   function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight;}
   function draw(){
     t++;ctx.clearRect(0,0,W,H);
-    const bg=ctx.createLinearGradient(0,0,W*0.7,H);
-    bg.addColorStop(0,'#ede4d3');bg.addColorStop(0.6,'#e8ddd0');bg.addColorStop(1,'#ecddd1');
-    ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
     ORBS.forEach((o,i)=>{
       const tt=t*o.sp,nx=sn(i,0,tt)*0.16,ny=sn(0,i,tt)*0.16;
       const cx=(o.rx+nx)*W,cy=(o.ry+ny)*H,rad=o.r*Math.min(W,H)*(1+0.055*Math.sin(t*0.0009+o.ph));
@@ -517,24 +517,30 @@ function StoryCard({feeling,category,profile,persona,height='100%',fontSize=18})
   const aff=AFFIRMATIONS[category]||AFFIRMATIONS.general;
   const p=PERSONAS[persona]||PERSONAS.nature;
   const fn=firstName(profile?.name);
+  const verseLen=(aff.verse||'').length;
+  const dynSize=verseLen>200?13:verseLen>140?15:fontSize;
   return(
     <div style={{height,width:'100%',position:'relative',overflow:'hidden',borderRadius:'inherit',backgroundImage:`url(${p.img})`,backgroundSize:'cover',backgroundPosition:'center',backgroundColor:p.bg}}>
-      <div style={{position:'absolute',inset:0,background:'linear-gradient(160deg,rgba(0,0,0,0.28) 0%,rgba(0,0,0,0.08) 40%,rgba(0,0,0,0.72) 100%)'}}/>
-      <div style={{position:'relative',zIndex:1,height:'100%',display:'flex',flexDirection:'column',padding:'20px 22px 26px'}}>
-        <div style={{display:'flex',alignItems:'center',gap:6}}>
-          <span style={{fontSize:13,fontWeight:600,color:'rgba(255,255,255,0.82)',letterSpacing:'0.04em'}}>Promises</span>
+      {/* Cinematic gradient — stronger at top and bottom */}
+      <div style={{position:'absolute',inset:0,background:'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.05) 35%, rgba(0,0,0,0.05) 55%, rgba(0,0,0,0.75) 100%)'}}/>
+      <div style={{position:'relative',zIndex:1,height:'100%',display:'flex',flexDirection:'column',padding:'58px 24px 28px'}}>
+        {/* Top branding — offset below story bars */}
+        <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:'auto'}}>
+          <span style={{fontSize:12,fontWeight:700,color:'rgba(255,255,255,0.7)',letterSpacing:'0.08em',textTransform:'uppercase'}}>Promises</span>
           <span style={{width:4,height:4,borderRadius:2,background:'#D97757',display:'inline-block'}}/>
         </div>
-        <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',textAlign:'center',gap:14,padding:'16px 4px'}}>
-          <span style={{display:'inline-flex',alignItems:'center',gap:6,padding:'5px 14px',borderRadius:999,background:'rgba(209,102,56,0.82)',color:'#fff',fontSize:13,fontWeight:500}}>
+        {/* Centered content */}
+        <div style={{display:'flex',flexDirection:'column',alignItems:'center',textAlign:'center',gap:16,padding:'0 4px',marginBottom:24}}>
+          <span style={{display:'inline-flex',alignItems:'center',gap:6,padding:'6px 16px',borderRadius:999,background:'rgba(209,102,56,0.88)',backdropFilter:'blur(8px)',color:'#fff',fontSize:13,fontWeight:600,letterSpacing:'0.02em',border:'1px solid rgba(255,255,255,0.2)'}}>
             <span style={{opacity:0.7}}>✦</span>{feeling}
           </span>
-          <p style={{fontSize,lineHeight:1.72,fontWeight:300,color:'rgba(255,255,255,0.96)',fontStyle:'italic'}}>{aff.verse}</p>
-          <p style={{fontSize:13,color:'#D97757',fontWeight:500}}>— {aff.ref}</p>
+          <p style={{fontSize:dynSize,lineHeight:1.75,fontWeight:300,color:'rgba(255,255,255,0.97)',fontStyle:'italic',textShadow:'0 2px 12px rgba(0,0,0,0.4)',letterSpacing:'-0.01em'}}>{aff.verse}</p>
+          <p style={{fontSize:12,color:'#E8895A',fontWeight:600,letterSpacing:'0.04em'}}>— {aff.ref}</p>
         </div>
+        {/* Footer */}
         <div style={{textAlign:'center'}}>
-          {fn&&<p style={{fontSize:12,color:'rgba(255,255,255,0.5)',marginBottom:6}}>— {fn}</p>}
-          <p style={{fontSize:9,color:'rgba(255,255,255,0.28)',letterSpacing:'0.12em',textTransform:'uppercase'}}>promises.church</p>
+          {fn&&<p style={{fontSize:12,color:'rgba(255,255,255,0.45)',marginBottom:5,fontWeight:300}}>— {fn}</p>}
+          <p style={{fontSize:8,color:'rgba(255,255,255,0.22)',letterSpacing:'0.14em',textTransform:'uppercase'}}>promises.church</p>
         </div>
       </div>
     </div>
@@ -544,13 +550,14 @@ function StoryCard({feeling,category,profile,persona,height='100%',fontSize=18})
 // ── Onboarding ────────────────────────────────────────────────────────────
 function Onboarding({onComplete}){
   const [step,setStep]=useState(0);
-  const [name,setName]=useState('');
+  const [name,setName]=useState(()=>{try{return localStorage.getItem('promises_auth_name')||'';}catch{return'';}});
   const [persona,setPersona]=useState('nature');
   const [denom,setDenom]=useState('');
   const [cadence,setCadence]=useState('daily');
   const [notifs,setNotifs]=useState(true);
 
   function finish(){
+    try{localStorage.removeItem('promises_auth_name');}catch(e){}
     const p={name:name.trim(),persona,denomination:denom||'Non-denominational',cadence,notifications:notifs,onboardingComplete:true,joinedAt:new Date().toISOString()};
     saveProfile(p);onComplete(p);
   }
@@ -859,9 +866,11 @@ function Share({feeling,category,profile,onRestart,dir}){
 
   return(
     <div className={`screen enter-${dir}`} data-screen-label="05 Share">
-      {/* Story card preview */}
-      <div className="a-pop" style={{borderRadius:20,overflow:'hidden',height:480}}>
-        <StoryCard feeling={feeling} category={category} profile={profile} persona={personaKey} height="100%"/>
+      {/* Story card preview — 9:16 phone ratio */}
+      <div className="a-pop" style={{display:'flex',justifyContent:'center'}}>
+        <div style={{width:'100%',maxWidth:300,aspectRatio:'9/16',borderRadius:22,overflow:'hidden',boxShadow:'0 16px 48px oklch(0.155 0.035 275 / 0.22)',border:'1px solid var(--border)'}}>
+          <StoryCard feeling={feeling} category={category} profile={profile} persona={personaKey} height="100%"/>
+        </div>
       </div>
 
       {/* Actions */}
@@ -880,25 +889,32 @@ function Share({feeling,category,profile,onRestart,dir}){
         <button className="btn btn-p btn-w" onClick={onRestart}>↺ New Check-In</button>
       </div>
 
-      {/* IG Story preview simulation */}
+      {/* Story preview — modern phone-frame design */}
       {storyPreview&&(
         <div className="story-overlay">
-          <div className="story-bars">
-            {[1,2,3].map((n,i)=><div key={i} className="story-bar"><div className="story-bar-fill" style={{width:i===0?`${storyProgress}%`:'0%',transition:i===0?'width 0.05s linear':'none'}}/></div>)}
-          </div>
-          <div className="story-header">
-            <div className="story-avatar"/>
-            <div>
-              <p style={{fontSize:13,fontWeight:600,color:'#fff',lineHeight:1.2}}>promises.church</p>
-              <p style={{fontSize:11,color:'rgba(255,255,255,0.6)'}}>Just now</p>
+          {/* Phone frame */}
+          <div className="story-frame">
+            {/* Progress bars inside frame */}
+            <div className="story-bars">
+              {[1,2,3].map((n,i)=><div key={i} className="story-bar"><div className="story-bar-fill" style={{width:i===0?`${storyProgress}%`:'0%',transition:i===0?'width 0.05s linear':'none'}}/></div>)}
             </div>
-            <button className="story-close" onClick={()=>setStoryPreview(false)}>✕</button>
+            {/* Header inside frame */}
+            <div className="story-header">
+              <div className="story-avatar"/>
+              <div style={{flex:1}}>
+                <p style={{fontSize:13,fontWeight:600,color:'#fff',lineHeight:1.2}}>promises.church</p>
+                <p style={{fontSize:10,color:'rgba(255,255,255,0.55)'}}>Just now</p>
+              </div>
+              <button className="story-close" onClick={()=>setStoryPreview(false)}>✕</button>
+            </div>
+            {/* Full-bleed story content */}
+            <StoryCard feeling={feeling} category={category} profile={profile} persona={personaKey} height="100%"/>
           </div>
-          <StoryCard feeling={feeling} category={category} profile={profile} persona={personaKey} height="100%" fontSize={20}/>
-          <div className="story-reply">
-            <div className="story-reply-box">Send message…</div>
-            <span style={{fontSize:22,color:'rgba(255,255,255,0.7)',cursor:'pointer'}}>♡</span>
-            <span style={{fontSize:20,color:'rgba(255,255,255,0.7)',cursor:'pointer'}}>↗</span>
+          {/* Reply bar below frame */}
+          <div className="story-actions">
+            <div className="story-reply-box">Message promises.church…</div>
+            <span style={{fontSize:24,color:'rgba(255,255,255,0.7)',cursor:'pointer',lineHeight:1}}>♡</span>
+            <span style={{fontSize:20,color:'rgba(255,255,255,0.7)',cursor:'pointer',lineHeight:1}}>↗</span>
           </div>
         </div>
       )}
@@ -1098,6 +1114,12 @@ function App(){
 
   // Preload persona images
   useEffect(()=>{Object.values(PERSONAS).forEach(p=>{const img=new Image();img.crossOrigin='anonymous';img.src=p.img;});},[]);
+
+  // Apply persona as body background
+  useEffect(()=>{
+    const p=PERSONAS[profile?.persona||'nature'];
+    if(p){document.body.style.backgroundImage=`url(${p.img})`;document.body.style.backgroundSize='cover';document.body.style.backgroundPosition='center';}
+  },[profile?.persona]);
 
   function goStep(n){setDir(n>step?'fwd':'back');setStep(n);}
   function handleCheckIn(word){const cat=categorize(word),ns=updateStreak(),aff=AFFIRMATIONS[cat]||AFFIRMATIONS.general,entry={id:Date.now(),feeling:word,category:cat,categoryLabel:CATEGORIES[cat]?.label||'General',ref:aff.ref,verse:aff.verse,date:new Date().toISOString()},nh=[entry,...history];saveHistory(nh);setHistory(nh);setFeeling(word);setCategory(cat);setStreak(ns);setDir('fwd');setStep(1);}
