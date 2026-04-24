@@ -114,7 +114,7 @@
     .step-seg.done   .step-name { color: var(--green); }
 
     /* ── Bottom nav ── */
-    .bot-nav { height: calc(var(--bot-h) + env(safe-area-inset-bottom, 0px)); display: flex; align-items: flex-start; border-top: 1px solid var(--border); background: oklch(0.908 0.033 64 / 0.92); backdrop-filter: blur(20px); flex-shrink: 0; padding: 0 8px env(safe-area-inset-bottom, 0px); gap: 4px; }
+    .bot-nav { height: calc(var(--bot-h) + env(safe-area-inset-bottom, 0px)); display: flex; align-items: flex-start; border-top: 1px solid var(--border); background: oklch(0.908 0.033 64 / 0.92); backdrop-filter: blur(20px); flex-shrink: 0; padding: 0 8px env(safe-area-inset-bottom, 0px); gap: 4px; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; }
     .bot-tab  { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 8px; border-radius: 12px; cursor: pointer; transition: background 0.15s; border: none; background: transparent; font-family: var(--ff); -webkit-tap-highlight-color: transparent; }
     .bot-tab:hover { background: var(--orange-s); }
     .bot-tab.active { background: var(--orange-s); }
@@ -216,8 +216,8 @@
     .persona-check { position: absolute; top: 5px; right: 5px; width: 18px; height: 18px; border-radius: 50%; background: var(--orange); display: flex; align-items: center; justify-content: center; }
 
     /* ── Story simulation ── */
-    .story-overlay { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; }
-    .story-frame { position: relative; width: 100%; max-width: 340px; aspect-ratio: 9/16; border-radius: 24px; overflow: hidden; box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06); flex-shrink: 0; }
+    .story-overlay { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; gap: 0; }
+    .story-frame { position: relative; aspect-ratio: 9/16; max-height: calc(90vh - 80px); width: auto; max-width: 340px; border-radius: 24px; overflow: hidden; box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06); flex-shrink: 0; background: #111; }
     .story-bars { position: absolute; top: 14px; left: 12px; right: 12px; z-index: 10; display: flex; gap: 3px; }
     .story-bar { flex: 1; height: 2.5px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden; }
     .story-bar-fill { height: 100%; background: #fff; border-radius: 2px; }
@@ -283,12 +283,9 @@ window.AmbientAudio=(function(){
   let currentMode=0,vol=0.45;
   const JAMENDO_CLIENT='e87b7b22';
   const MODES=[
-    {name:'Ambient Chords',tags:'gospel worship',trackName:null},
-    {name:'963 Hz · Crown',tags:'963hz meditation',trackName:null},
-    {name:'528 Hz · Love',tags:'528hz healing',trackName:null},
-    {name:'432 Hz · Harmony',tags:'432hz ambient',trackName:null}
+    {name:'963 Hz · Solfeggio',tags:'solfeggio meditation'}
   ];
-  const FREQS=[null,963,528,432];
+  const FREQS=[963];
   let streamEl=null,streamTrackName='';
 
   async function fetchJamendoStream(mode){
@@ -532,35 +529,54 @@ function getGreeting(profile,history){
 // ── Canvas story download ─────────────────────────────────────────────────
 function wrapCanvasText(ctx,text,maxW){const words=text.split(' ');const lines=[];let line='';words.forEach(w=>{const t=line?line+' '+w:w;if(ctx.measureText(t).width>maxW&&line){lines.push(line);line=w;}else line=t;});if(line)lines.push(line);return lines;}
 function roundFill(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();ctx.fill();}
+function buildStoryCanvas(personaKey,verse,ref,feeling,name){
+  return new Promise(resolve=>{
+    const W=1080,H=1920,canvas=document.createElement('canvas');
+    canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
+    const p=PERSONAS[personaKey]||PERSONAS.nature;
+    ctx.fillStyle=p.bg;ctx.fillRect(0,0,W,H);
+    function render(){
+      const g=ctx.createLinearGradient(0,0,0,H);
+      g.addColorStop(0,'rgba(0,0,0,0.32)');g.addColorStop(0.5,'rgba(0,0,0,0.1)');g.addColorStop(1,'rgba(0,0,0,0.8)');
+      ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+      ctx.font='600 50px sans-serif';ctx.fillStyle='rgba(255,255,255,0.88)';ctx.textAlign='left';ctx.fillText('Promises',80,130);
+      ctx.font='600 44px sans-serif';ctx.textAlign='center';
+      const bT='✦ '+feeling;const bW=ctx.measureText(bT).width+70;
+      ctx.fillStyle='rgba(209,102,56,0.9)';roundFill(ctx,(W-bW)/2,H/2-230,bW,84,42);
+      ctx.fillStyle='#fff';ctx.fillText(bT,W/2,H/2-176);
+      ctx.font='300 italic 60px Georgia,serif';ctx.fillStyle='rgba(255,255,255,0.96)';ctx.textAlign='center';
+      const v=verse.replace(/[""]/g,'');const lines=wrapCanvasText(ctx,v,W-200);
+      const lh=88,sy=H/2-90;
+      lines.forEach((l,i)=>ctx.fillText(l,W/2,sy+i*lh));
+      ctx.font='500 46px sans-serif';ctx.fillStyle='#D97757';ctx.fillText('— '+ref,W/2,sy+lines.length*lh+72);
+      if(name){ctx.font='300 38px sans-serif';ctx.fillStyle='rgba(255,255,255,0.5)';ctx.fillText(name,W/2,sy+lines.length*lh+148);}
+      ctx.font='300 30px sans-serif';ctx.fillStyle='rgba(255,255,255,0.3)';ctx.fillText('promises.church',W/2,H-80);
+      resolve(canvas);
+    }
+    const img=new Image();img.crossOrigin='anonymous';
+    img.onload=()=>{const r=Math.max(W/img.width,H/img.height);ctx.drawImage(img,(W-img.width*r)/2,(H-img.height*r)/2,img.width*r,img.height*r);render();};
+    img.onerror=()=>render();img.src=p.img;
+  });
+}
 function downloadStory(personaKey,verse,ref,feeling,name){
-  const W=1080,H=1920,canvas=document.createElement('canvas');
-  canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
-  const p=PERSONAS[personaKey]||PERSONAS.nature;
-  ctx.fillStyle=p.bg;ctx.fillRect(0,0,W,H);
-  function render(){
-    const g=ctx.createLinearGradient(0,0,0,H);
-    g.addColorStop(0,'rgba(0,0,0,0.32)');g.addColorStop(0.5,'rgba(0,0,0,0.1)');g.addColorStop(1,'rgba(0,0,0,0.8)');
-    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-    // App name
-    ctx.font='600 50px sans-serif';ctx.fillStyle='rgba(255,255,255,0.88)';ctx.textAlign='left';ctx.fillText('Promises',80,130);
-    // Feeling badge
-    ctx.font='600 44px sans-serif';ctx.textAlign='center';
-    const bT='✦ '+feeling;const bW=ctx.measureText(bT).width+70;
-    ctx.fillStyle='rgba(209,102,56,0.9)';roundFill(ctx,(W-bW)/2,H/2-230,bW,84,42);
-    ctx.fillStyle='#fff';ctx.fillText(bT,W/2,H/2-176);
-    // Verse
-    ctx.font='300 italic 60px Georgia,serif';ctx.fillStyle='rgba(255,255,255,0.96)';ctx.textAlign='center';
-    const v=verse.replace(/[""]/g,'');const lines=wrapCanvasText(ctx,v,W-200);
-    const lh=88,sy=H/2-90;
-    lines.forEach((l,i)=>ctx.fillText(l,W/2,sy+i*lh));
-    ctx.font='500 46px sans-serif';ctx.fillStyle='#D97757';ctx.fillText('— '+ref,W/2,sy+lines.length*lh+72);
-    if(name){ctx.font='300 38px sans-serif';ctx.fillStyle='rgba(255,255,255,0.5)';ctx.fillText(name,W/2,sy+lines.length*lh+148);}
-    ctx.font='300 30px sans-serif';ctx.fillStyle='rgba(255,255,255,0.3)';ctx.fillText('promises.church',W/2,H-80);
+  buildStoryCanvas(personaKey,verse,ref,feeling,name).then(canvas=>{
     try{const a=document.createElement('a');a.download=`promise-${feeling}.png`;a.href=canvas.toDataURL('image/png');a.click();}catch(e){console.warn('Download:',e);}
+  });
+}
+async function shareStoryWhatsApp(personaKey,verse,ref,feeling,name,waText){
+  try{
+    const canvas=await buildStoryCanvas(personaKey,verse,ref,feeling,name);
+    canvas.toBlob(async blob=>{
+      const file=new File([blob],'promise.png',{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],text:waText});
+      }else{
+        window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`,'_blank');
+      }
+    },'image/png');
+  }catch(e){
+    window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`,'_blank');
   }
-  const img=new Image();img.crossOrigin='anonymous';
-  img.onload=()=>{const r=Math.max(W/img.width,H/img.height);ctx.drawImage(img,(W-img.width*r)/2,(H-img.height*r)/2,img.width*r,img.height*r);render();};
-  img.onerror=()=>render();img.src=p.img;
 }
 
 // ── Story card component ─────────────────────────────────────────────────
@@ -919,7 +935,7 @@ function Share({feeling,category,profile,onRestart,dir}){
     <div className={`screen enter-${dir}`} data-screen-label="05 Share">
       {/* Story card preview — 9:16 phone ratio */}
       <div className="a-pop" style={{display:'flex',justifyContent:'center'}}>
-        <div style={{width:'100%',maxWidth:300,aspectRatio:'9/16',borderRadius:22,overflow:'hidden',boxShadow:'0 16px 48px oklch(0.155 0.035 275 / 0.22)',border:'1px solid var(--border)'}}>
+        <div style={{aspectRatio:'9/16',maxHeight:'55vh',width:'auto',maxWidth:300,borderRadius:22,overflow:'hidden',boxShadow:'0 16px 48px oklch(0.155 0.035 275 / 0.22)',border:'1px solid var(--border)',background:'#111',flexShrink:0}}>
           <StoryCard feeling={feeling} category={category} profile={profile} persona={personaKey} height="100%"/>
         </div>
       </div>
@@ -931,7 +947,7 @@ function Share({feeling,category,profile,onRestart,dir}){
           <button className="btn btn-ghost" style={{flex:1}} onClick={()=>downloadStory(personaKey,aff.verse,aff.ref,feeling,fn)}>Download PNG</button>
         </div>
         <div className="btn-row" style={{marginBottom:9}}>
-          <a href={`https://wa.me/?text=${encodeURIComponent(waText)}`} target="_blank" rel="noopener noreferrer" className="btn btn-ghost" style={{flex:1,textDecoration:'none',justifyContent:'center'}}>WhatsApp</a>
+          <button className="btn btn-ghost" style={{flex:1}} onClick={()=>shareStoryWhatsApp(personaKey,aff.verse,aff.ref,feeling,fn,waText)}>WhatsApp</button>
           <div className="tip-w" style={{flex:1}}>
             <button className="btn btn-ghost btn-w" onClick={copyIG}>{igCopied?'Copied ✓':'Copy for IG'}</button>
             {igCopied&&<span className="tip">Copied ✓</span>}
@@ -1077,8 +1093,8 @@ function Settings({profile,onUpdateProfile,onClearHistory,dir}){
       <div className="card a-up d3">
         <p style={{fontSize:11,fontWeight:600,color:'var(--t3)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:12}}>Your Stats</p>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-          <div className="stat-box"><p className="stat-lbl">Current streak</p><p className="stat-val">{streak.current}d</p></div>
-          <div className="stat-box"><p className="stat-lbl">Longest streak</p><p className="stat-val">{streak.longest}d</p></div>
+          <div className="stat-box"><p className="stat-lbl">Current streak</p><p className="stat-val">{streak.current===1?'1 Day':`${streak.current} Days`}</p></div>
+          <div className="stat-box"><p className="stat-lbl">Longest streak</p><p className="stat-val">{streak.longest===1?'1 Day':`${streak.longest} Days`}</p></div>
         </div>
       </div>
       <div className="tip-w a-up d4">
@@ -1099,7 +1115,7 @@ function Settings({profile,onUpdateProfile,onClearHistory,dir}){
 }
 
 // ── Music bar ─────────────────────────────────────────────────────────────
-function MusicBar({playing,vol,modeName,trackName,onDown,onUp,onNext}){
+function MusicBar({playing,vol,modeName,trackName,onDown,onUp}){
   if(!playing)return null;
   return(
     <div className="music-bar">
@@ -1108,7 +1124,6 @@ function MusicBar({playing,vol,modeName,trackName,onDown,onUp,onNext}){
       <button className="mbar-btn" onClick={onDown}>−</button>
       <span className="mbar-vol">{Math.round(vol*100)}%</span>
       <button className="mbar-btn" onClick={onUp}>+</button>
-      <button className="mbar-btn" onClick={onNext} style={{color:'var(--orange)',borderColor:'var(--orange-b)',background:'var(--orange-s)',marginLeft:2}}>⟳</button>
     </div>
   );
 }
@@ -1212,7 +1227,7 @@ function App(){
           </div>
         </nav>
 
-        <MusicBar playing={musicPlaying} vol={musicVol} modeName={modeName} trackName={trackName} onDown={volDown} onUp={volUp} onNext={nextMusicMode}/>
+        <MusicBar playing={musicPlaying} vol={musicVol} modeName={modeName} trackName={trackName} onDown={volDown} onUp={volUp}/>
         {inFlow&&<StepBar current={step} onStep={goStep}/>}
         {!profile?.onboardingComplete&&<Onboarding onComplete={p=>{setProfile(p);}}/>}
 
