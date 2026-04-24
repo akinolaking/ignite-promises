@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Promises — Find Peace in Every Word</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Headspace palette · -0.03 oklch L shift ── */
+    :root {
+      --bg:        oklch(0.905 0.035 65);
+      --bg-card:   oklch(0.945 0.022 66);
+      --bg-deep:   oklch(0.165 0.038 275);
+      --orange:    oklch(0.625 0.185 48);
+      --orange-l:  oklch(0.725 0.16 52);
+      --orange-s:  oklch(0.625 0.185 48 / 0.12);
+      --teal:      oklch(0.595 0.075 215);
+      --teal-s:    oklch(0.595 0.075 215 / 0.14);
+      --yellow:    oklch(0.835 0.12 85);
+      --yellow-s:  oklch(0.835 0.12 85 / 0.18);
+      --green:     oklch(0.665 0.11 155);
+      --text:      oklch(0.155 0.035 275);
+      --t2:        oklch(0.46 0.04 280);
+      --t3:        oklch(0.72 0.025 280);
+      --border:    oklch(0.865 0.025 65);
+      --border-hi: oklch(0.82 0.04 65);
+      --white:     #fff;
+      --r:         16px;
+      --rr:        24px;
+      --ff:        'Inter', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--ff); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+
+    /* ── Animate-UI patterns ── */
+    [data-au] { opacity: 0; transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.22,1,0.36,1); }
+    [data-au="fade-up"]    { transform: translateY(28px); }
+    [data-au="fade-left"]  { transform: translateX(-28px); }
+    [data-au="fade-right"] { transform: translateX(28px); }
+    [data-au="fade-in"]    { transform: none; }
+    [data-au="scale-up"]   { transform: scale(0.92); }
+    [data-au].au-visible   { opacity: 1; transform: none !important; }
+    [data-au-delay="1"]    { transition-delay: 0.08s; }
+    [data-au-delay="2"]    { transition-delay: 0.16s; }
+    [data-au-delay="3"]    { transition-delay: 0.24s; }
+    [data-au-delay="4"]    { transition-delay: 0.32s; }
+    [data-au-delay="5"]    { transition-delay: 0.40s; }
+
+    /* ── Layout ── */
+    .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+    /* ── Nav ── */
+    .nav {
+      position: sticky; top: 0; z-index: 50;
+      background: oklch(0.905 0.035 65 / 0.85);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    .nav-logo { font-size: 22px; font-weight: 600; color: var(--orange); letter-spacing: -0.4px; text-decoration: none; }
+    .nav-links { display: flex; align-items: center; gap: 8px; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 20px; border-radius: 10px; font-family: var(--ff); font-size: 14px; font-weight: 500; cursor: pointer; border: none; outline: none; text-decoration: none; transition: transform 0.14s, box-shadow 0.14s, opacity 0.14s; white-space: nowrap; }
+    .btn:active { transform: scale(0.97); }
+    .btn-ghost { background: transparent; color: var(--t2); }
+    .btn-ghost:hover { background: var(--orange-s); color: var(--orange); }
+    .btn-primary { background: var(--orange); color: #fff; box-shadow: 0 4px 18px oklch(0.625 0.185 48 / 0.28); }
+    .btn-primary:hover { opacity: 0.9; box-shadow: 0 6px 24px oklch(0.625 0.185 48 / 0.38); }
+    .btn-outline { background: transparent; color: var(--orange); border: 1.5px solid var(--orange); }
+    .btn-outline:hover { background: var(--orange-s); }
+    .btn-lg { padding: 14px 28px; font-size: 15px; border-radius: 12px; }
+    .btn-xl { padding: 16px 36px; font-size: 16px; border-radius: 14px; }
+
+    /* ── HeroUI Card ── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--rr);
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 2px 16px oklch(0.155 0.035 275 / 0.06), 0 1px 0 rgba(255,255,255,0.6) inset;
+    }
+    .card-dark { background: var(--bg-deep); border-color: oklch(0.165 0.038 275); color: #e8e0f4; }
+
+    /* ── Hero ── */
+    .hero { padding: 88px 0 72px; position: relative; overflow: hidden; }
+    .hero-bg-orb { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; }
+    .hero-bg-1 { width: 500px; height: 500px; top: -100px; right: -80px; background: var(--orange); opacity: 0.08; }
+    .hero-bg-2 { width: 350px; height: 350px; bottom: -50px; left: -60px; background: var(--teal); opacity: 0.1; }
+    .hero-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; position: relative; z-index: 1; }
+    .hero-eyebrow { display: inline-flex; align-items: center; gap: 6px; padding: 5px 13px; border-radius: 999px; background: var(--orange-s); color: var(--orange); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 20px; border: 1px solid oklch(0.625 0.185 48 / 0.2); }
+    .hero-h1 { font-size: clamp(38px, 5vw, 58px); font-weight: 300; line-height: 1.12; letter-spacing: -0.03em; color: var(--text); margin-bottom: 20px; }
+    .hero-h1 strong { font-weight: 600; color: var(--orange); }
+    .hero-sub { font-size: 17px; color: var(--t2); line-height: 1.7; margin-bottom: 36px; font-weight: 300; max-width: 440px; }
+    .hero-cta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .hero-note { font-size: 12px; color: var(--t3); margin-top: 14px; }
+
+    /* ── Hero illustration ── */
+    .hero-visual { position: relative; }
+    .phone-mock {
+      width: 260px; margin: 0 auto; aspect-ratio: 9/19;
+      background: var(--bg-deep);
+      border-radius: 36px;
+      border: 6px solid oklch(0.22 0.04 275);
+      box-shadow: 0 32px 64px oklch(0.155 0.035 275 / 0.2), 0 0 0 1px rgba(255,255,255,0.08) inset;
+      overflow: hidden;
+      position: relative;
+    }
+    .phone-inner { padding: 18px 14px; display: flex; flex-direction: column; gap: 10px; }
+    .pm-chip { display: inline-flex; padding: 3px 9px; border-radius: 999px; background: oklch(0.625 0.185 48 / 0.18); color: var(--orange-l); font-size: 9px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; border: 1px solid oklch(0.625 0.185 48 / 0.25); align-self: flex-start; }
+    .pm-verse { font-size: 11.5px; color: oklch(0.88 0.025 65); line-height: 1.65; font-weight: 300; }
+    .pm-ref { font-size: 10px; color: var(--orange-l); font-weight: 500; margin-top: 4px; }
+    .pm-card { background: oklch(0.21 0.04 275); border: 1px solid oklch(0.27 0.04 275); border-radius: 12px; padding: 12px; }
+    .pm-prog { height: 3px; border-radius: 2px; background: oklch(0.27 0.04 275); overflow: hidden; margin-top: 8px; }
+    .pm-prog-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--orange), var(--yellow)); width: 57%; }
+    .pm-label { font-size: 9px; color: oklch(0.6 0.03 275); font-weight: 500; margin-bottom: 4px; display: flex; justify-content: space-between; }
+    .phone-orb { position: absolute; width: 180px; height: 180px; border-radius: 50%; filter: blur(60px); pointer-events: none; }
+    .phone-orb-1 { top: -40px; right: -40px; background: var(--orange); opacity: 0.15; }
+    .phone-orb-2 { bottom: -20px; left: -20px; background: var(--teal); opacity: 0.15; }
+
+    /* ── Section ── */
+    .section { padding: 80px 0; }
+    .section-label { font-size: 11px; font-weight: 600; color: var(--orange); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
+    .section-h2 { font-size: clamp(28px, 4vw, 42px); font-weight: 300; line-height: 1.2; letter-spacing: -0.025em; margin-bottom: 16px; }
+    .section-h2 strong { font-weight: 600; }
+    .section-sub { font-size: 16px; color: var(--t2); line-height: 1.7; font-weight: 300; max-width: 520px; }
+    .section-center { text-align: center; }
+    .section-center .section-sub { margin: 0 auto; }
+
+    /* ── Features grid ── */
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 52px; }
+    .feat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--rr); padding: 28px 24px; box-shadow: 0 2px 12px oklch(0.155 0.035 275 / 0.05); transition: transform 0.22s, box-shadow 0.22s; }
+    .feat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px oklch(0.155 0.035 275 / 0.1); }
+    .feat-icon { width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 16px; }
+    .feat-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+    .feat-desc { font-size: 14px; color: var(--t2); line-height: 1.65; font-weight: 300; }
+
+    /* ── Scripture strip ── */
+    .verse-strip { background: var(--bg-deep); border-radius: 28px; padding: 56px 48px; position: relative; overflow: hidden; }
+    .verse-strip::before { content: ''; position: absolute; top: -60%; left: -20%; width: 120%; height: 120%; background: radial-gradient(ellipse at 40% 40%, oklch(0.625 0.185 48 / 0.12), transparent 60%); pointer-events: none; }
+    .verse-quote { font-size: clamp(20px, 3vw, 30px); font-weight: 300; line-height: 1.65; color: oklch(0.92 0.025 65); letter-spacing: -0.01em; margin-bottom: 16px; position: relative; z-index: 1; }
+    .verse-ref { font-size: 14px; color: var(--orange-l); font-weight: 500; z-index: 1; position: relative; }
+
+    /* ── How it works ── */
+    .steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 52px; position: relative; }
+    .steps-grid::before { content: ''; position: absolute; top: 26px; left: 16.7%; width: 66.6%; height: 1px; background: linear-gradient(90deg, var(--orange-s), var(--orange), var(--orange-s)); z-index: 0; }
+    .step { text-align: center; position: relative; z-index: 1; }
+    .step-num { width: 52px; height: 52px; border-radius: 50%; background: var(--orange); color: #fff; font-size: 18px; font-weight: 600; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; box-shadow: 0 4px 16px oklch(0.625 0.185 48 / 0.3); }
+    .step-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+    .step-desc { font-size: 14px; color: var(--t2); line-height: 1.65; font-weight: 300; }
+
+    /* ── Social proof ── */
+    .proof-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 52px; }
+    .proof-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--rr); padding: 24px; }
+    .proof-stars { color: var(--yellow); font-size: 14px; margin-bottom: 12px; letter-spacing: 2px; }
+    .proof-text { font-size: 14px; color: var(--t2); line-height: 1.7; font-weight: 300; margin-bottom: 16px; }
+    .proof-author { display: flex; align-items: center; gap: 10px; }
+    .proof-av { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #fff; flex-shrink: 0; }
+    .proof-name { font-size: 13px; font-weight: 500; }
+    .proof-role { font-size: 11px; color: var(--t3); }
+
+    /* ── CTA Banner ── */
+    .cta-banner { background: var(--orange); border-radius: 28px; padding: 60px 48px; text-align: center; position: relative; overflow: hidden; }
+    .cta-banner::before { content: ''; position: absolute; top: -50%; right: -20%; width: 60%; height: 200%; background: radial-gradient(ellipse, rgba(255,255,255,0.1), transparent 70%); pointer-events: none; }
+    .cta-h { font-size: clamp(26px, 3.5vw, 40px); font-weight: 600; color: #fff; margin-bottom: 12px; line-height: 1.2; }
+    .cta-sub { font-size: 16px; color: rgba(255,255,255,0.8); font-weight: 300; margin-bottom: 32px; }
+    .btn-white { background: #fff; color: var(--orange); font-weight: 600; }
+    .btn-white:hover { opacity: 0.93; }
+
+    /* ── Footer ── */
+    .footer { padding: 36px 0; border-top: 1px solid var(--border); }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; }
+    .footer-logo { font-size: 18px; font-weight: 600; color: var(--orange); }
+    .footer-text { font-size: 13px; color: var(--t3); }
+
+    /* ── Divider ── */
+    .divider { height: 1px; background: var(--border); margin: 0; }
+
+    /* ── Chip ── */
+    .chip { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+    .chip-o { background: var(--orange-s); color: var(--orange); border: 1px solid oklch(0.625 0.185 48 / 0.2); }
+    .chip-t { background: var(--teal-s); color: var(--teal); border: 1px solid oklch(0.595 0.075 215 / 0.22); }
+    .chip-y { background: var(--yellow-s); color: oklch(0.5 0.12 80); border: 1px solid oklch(0.835 0.12 85 / 0.3); }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .hero-inner { grid-template-columns: 1fr; gap: 40px; }
+      .phone-mock { width: 200px; }
+      .features-grid, .steps-grid, .proof-grid { grid-template-columns: 1fr; gap: 14px; }
+      .steps-grid::before { display: none; }
+      .verse-strip { padding: 36px 24px; }
+      .cta-banner { padding: 40px 24px; }
+      .hero { padding: 56px 0 48px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav class="nav">
+    <div class="container">
+      <div class="nav-inner">
+        <a href="Landing.html" class="nav-logo">Promises</a>
+        <div class="nav-links">
+          <a href="Auth.html" class="btn btn-ghost">Sign In</a>
+          <a href="Auth.html?tab=signup" class="btn btn-primary">Get Started</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-bg-orb hero-bg-1"></div>
+    <div class="hero-bg-orb hero-bg-2"></div>
+    <div class="container">
+      <div class="hero-inner">
+        <div>
+          <div class="hero-eyebrow" data-au="fade-up">✦ Faith-Based Wellness</div>
+          <h1 class="hero-h1" data-au="fade-up" data-au-delay="1">
+            Exchange your<br>
+            feeling for a<br>
+            <strong>Promise.</strong>
+          </h1>
+          <p class="hero-sub" data-au="fade-up" data-au-delay="2">
+            One word, every day. Receive the scripture, prayer, and music that meets you exactly where you are.
+          </p>
+          <div class="hero-cta" data-au="fade-up" data-au-delay="3">
+            <a href="Auth.html?tab=signup" class="btn btn-primary btn-xl">Begin Your Journey</a>
+            <a href="Auth.html" class="btn btn-outline btn-lg">Sign In</a>
+          </div>
+          <p class="hero-note" data-au="fade-in" data-au-delay="4">Free to start · No credit card required</p>
+        </div>
+        <div class="hero-visual" data-au="fade-left" data-au-delay="2">
+          <div class="phone-orb phone-orb-1"></div>
+          <div class="phone-orb phone-orb-2"></div>
+          <div class="phone-mock">
+            <div class="phone-inner">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+                <span style="font-size:13px;font-weight:600;color:oklch(0.88 0.03 65)">Promises</span>
+                <span class="pm-chip">Check-In</span>
+              </div>
+              <div class="pm-card">
+                <div class="pm-chip" style="margin-bottom:8px">Your Affirmation</div>
+                <p class="pm-verse">"Fear not, for I am with you; be not dismayed, for I am your God."</p>
+                <p class="pm-ref">— Isaiah 41:10</p>
+              </div>
+              <div class="pm-card">
+                <div class="pm-label"><span>Daily streak</span><span>4 of 7</span></div>
+                <div class="pm-prog"><div class="pm-prog-fill"></div></div>
+              </div>
+              <div class="pm-card" style="background:oklch(0.625 0.185 48/0.15);border-color:oklch(0.625 0.185 48/0.25)">
+                <p style="font-size:10px;font-weight:500;color:var(--orange-l);margin-bottom:4px">Prayer For You</p>
+                <p style="font-size:9.5px;color:oklch(0.75 0.03 65);line-height:1.5;font-weight:300">"Heavenly Father, in this moment I come before You — not with answers, but with my whole self..."</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="section">
+    <div class="container">
+      <div class="section-center" data-au="fade-up">
+        <p class="section-label">What Promises does</p>
+        <h2 class="section-h2"><strong>Four gifts</strong> for your soul every day</h2>
+        <p class="section-sub">A complete spiritual rhythm — check in, receive, reflect, and share.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feat-card" data-au="fade-up" data-au-delay="1">
+          <div class="feat-icon" style="background:var(--orange-s)">🌅</div>
+          <div class="chip chip-o" style="margin-bottom:12px">Step 1</div>
+          <p class="feat-title">Daily Check-In</p>
+          <p class="feat-desc">One word captures where you are. Your heart is heard without judgement — just honest presence.</p>
+        </div>
+        <div class="feat-card" data-au="fade-up" data-au-delay="2">
+          <div class="feat-icon" style="background:var(--teal-s)">📖</div>
+          <div class="chip chip-t" style="margin-bottom:12px">Step 2</div>
+          <p class="feat-title">Scripture Affirmation</p>
+          <p class="feat-desc">A verse chosen specifically for your feeling — the living Word speaking directly into your moment.</p>
+        </div>
+        <div class="feat-card" data-au="fade-up" data-au-delay="3">
+          <div class="feat-icon" style="background:var(--yellow-s)">🙏</div>
+          <div class="chip chip-y" style="margin-bottom:12px">Step 3</div>
+          <p class="feat-title">Personalised Prayer</p>
+          <p class="feat-desc">A prayer written for your exact emotional state — words for when you can't find your own.</p>
+        </div>
+        <div class="feat-card" data-au="fade-up" data-au-delay="2">
+          <div class="feat-icon" style="background:oklch(0.665 0.11 155/0.12)">♪</div>
+          <div class="chip" style="background:oklch(0.665 0.11 155/0.12);color:var(--green);border:1px solid oklch(0.665 0.11 155/0.22);margin-bottom:12px">Step 4</div>
+          <p class="feat-title">Worship Music</p>
+          <p class="feat-desc">Curated worship songs that match your mood — straight to Spotify, selected for your soul.</p>
+        </div>
+        <div class="feat-card" data-au="fade-up" data-au-delay="3">
+          <div class="feat-icon" style="background:oklch(0.595 0.075 215/0.14)">✦</div>
+          <div class="chip chip-t" style="margin-bottom:12px">Step 5</div>
+          <p class="feat-title">Share Your Promise</p>
+          <p class="feat-desc">Create a beautiful share card to send to friends and family — spread the Word with one tap.</p>
+        </div>
+        <div class="feat-card" data-au="fade-up" data-au-delay="4" style="background:var(--bg-deep);border-color:oklch(0.22 0.04 275);color:#e8e0f4">
+          <div class="feat-icon" style="background:oklch(0.625 0.185 48/0.18)">🔥</div>
+          <p class="feat-title" style="color:#e8e0f4">Daily Streaks</p>
+          <p class="feat-desc" style="color:oklch(0.6 0.03 275)">Build a consistent spiritual habit. Track your daily rhythm and celebrate consistency.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scripture Strip -->
+  <section class="section" style="padding-top:0">
+    <div class="container">
+      <div class="verse-strip" data-au="scale-up">
+        <div style="display:flex;align-items:flex-start;gap:32px;flex-wrap:wrap">
+          <div style="flex:1;min-width:260px">
+            <p class="section-label" style="color:var(--orange-l)">Today's Promise</p>
+            <p class="verse-quote">"The Lord is my shepherd; I shall not want. He makes me lie down in green pastures."</p>
+            <p class="verse-ref">— Psalm 23:1–2</p>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;padding-top:24px">
+            <div style="background:oklch(0.21 0.04 275);border:1px solid oklch(0.28 0.04 275);border-radius:14px;padding:14px 18px;min-width:180px">
+              <p style="font-size:11px;color:oklch(0.6 0.03 275);font-weight:500;margin-bottom:4px">Feeling right now</p>
+              <p style="font-size:15px;color:oklch(0.88 0.03 65);font-weight:300">peaceful</p>
+            </div>
+            <div style="background:oklch(0.625 0.185 48/0.15);border:1px solid oklch(0.625 0.185 48/0.25);border-radius:14px;padding:14px 18px">
+              <p style="font-size:11px;color:var(--orange-l);font-weight:500;margin-bottom:4px">Streak</p>
+              <p style="font-size:15px;color:oklch(0.88 0.03 65);font-weight:300">4 days ✦</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="section" style="background:var(--bg-card);margin:0">
+    <div class="container">
+      <div class="section-center" data-au="fade-up">
+        <p class="section-label">How it works</p>
+        <h2 class="section-h2"><strong>One minute.</strong> Infinite peace.</h2>
+        <p class="section-sub">No complicated setup — just show up as you are.</p>
+      </div>
+      <div class="steps-grid">
+        <div class="step" data-au="fade-up" data-au-delay="1">
+          <div class="step-num">1</div>
+          <p class="step-title">Give Your Word</p>
+          <p class="step-desc">Type one word that captures how you're feeling right now — no judgement, just honesty.</p>
+        </div>
+        <div class="step" data-au="fade-up" data-au-delay="2">
+          <div class="step-num">2</div>
+          <p class="step-title">Receive Your Promise</p>
+          <p class="step-desc">A verse, prayer and worship song matched to your feeling arrives instantly.</p>
+        </div>
+        <div class="step" data-au="fade-up" data-au-delay="3">
+          <div class="step-num">3</div>
+          <p class="step-title">Share the Hope</p>
+          <p class="step-desc">Create a beautiful card to share your promise with someone who needs it today.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Social Proof -->
+  <section class="section">
+    <div class="container">
+      <div class="section-center" data-au="fade-up">
+        <p class="section-label">Community</p>
+        <h2 class="section-h2">Words that <strong>changed days</strong></h2>
+      </div>
+      <div class="proof-grid">
+        <div class="proof-card" data-au="fade-up" data-au-delay="1">
+          <div class="proof-stars">★★★★★</div>
+          <p class="proof-text">"I typed 'overwhelmed' and the verse that came back made me cry at my desk. This app is something else."</p>
+          <div class="proof-author">
+            <div class="proof-av" style="background:var(--orange)">SA</div>
+            <div><p class="proof-name">Sarah A.</p><p class="proof-role">Teacher, Lagos</p></div>
+          </div>
+        </div>
+        <div class="proof-card" data-au="fade-up" data-au-delay="2">
+          <div class="proof-stars">★★★★★</div>
+          <p class="proof-text">"I've been using it every morning for 3 weeks. My prayer life has genuinely shifted. Can't go a day without it."</p>
+          <div class="proof-author">
+            <div class="proof-av" style="background:var(--teal)">MO</div>
+            <div><p class="proof-name">Michael O.</p><p class="proof-role">Pastor, Accra</p></div>
+          </div>
+        </div>
+        <div class="proof-card" data-au="fade-up" data-au-delay="3">
+          <div class="proof-stars">★★★★★</div>
+          <p class="proof-text">"The music selections are spot on. Every time I've checked in 'anxious', the song has been exactly right."</p>
+          <div class="proof-author">
+            <div class="proof-av" style="background:oklch(0.665 0.11 155)">JN</div>
+            <div><p class="proof-name">Joy N.</p><p class="proof-role">Nurse, London</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section" style="padding-top:0">
+    <div class="container">
+      <div class="cta-banner" data-au="scale-up">
+        <p class="cta-h">Your word is waiting to become a Promise.</p>
+        <p class="cta-sub">Join thousands who check in with God daily.</p>
+        <a href="Auth.html?tab=signup" class="btn btn-white btn-xl">Start Free Today</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <span class="footer-logo">Promises</span>
+        <span class="footer-text">© 2026 Promises. Faith-based daily wellness.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Animate-UI intersection observer
+    const els = document.querySelectorAll('[data-au]');
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if(e.isIntersecting){
+          e.target.classList.add('au-visible');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    els.forEach(el => io.observe(el));
+  </script>
+</body>
+</html>
