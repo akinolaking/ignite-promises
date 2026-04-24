@@ -281,8 +281,43 @@ if('serviceWorker' in navigator){
 window.AmbientAudio=(function(){
   let actx,master,send,playing=false,nodes=[],stopFlag=false;
   let currentMode=0,vol=0.45;
-  const MODES=[{name:'Ambient Chords',pixabay:'gospel worship ambient'},{name:'963 Hz · Crown',pixabay:'963hz frequency'},{name:'528 Hz · Love',pixabay:'528hz frequency'},{name:'432 Hz · Harmony',pixabay:'432hz frequency meditation'}];
+  const JAMENDO_CLIENT='e87b7b22';
+  const MODES=[
+    {name:'Ambient Chords',tags:'gospel worship',trackName:null},
+    {name:'963 Hz · Crown',tags:'963hz meditation',trackName:null},
+    {name:'528 Hz · Love',tags:'528hz healing',trackName:null},
+    {name:'432 Hz · Harmony',tags:'432hz ambient',trackName:null}
+  ];
   const FREQS=[null,963,528,432];
+  let streamEl=null,streamTrackName='';
+
+  async function fetchJamendoStream(mode){
+    try{
+      const url=`https://api.jamendo.com/v3.0/tracks/?client_id=${JAMENDO_CLIENT}&format=json&limit=10&tags=${encodeURIComponent(MODES[mode].tags)}&audioformat=mp32&boost=popularity_total&license_cc=1`;
+      const res=await fetch(url);
+      const data=await res.json();
+      const tracks=(data.results||[]).filter(t=>t.audio);
+      if(!tracks.length)return null;
+      const t=tracks[Math.floor(Math.random()*tracks.length)];
+      return{url:t.audio,name:`${t.name} — ${t.artist_name}`};
+    }catch(e){return null;}
+  }
+
+  function playStream(audioUrl,trackName){
+    if(streamEl){streamEl.pause();streamEl.src='';}
+    streamEl=new Audio();
+    streamEl.crossOrigin='anonymous';
+    streamEl.src=audioUrl;
+    streamEl.loop=true;
+    streamEl.volume=vol;
+    streamEl.play().catch(()=>{});
+    streamTrackName=trackName;
+  }
+
+  function stopStream(){
+    if(streamEl){streamEl.pause();streamEl.src='';streamEl=null;}
+    streamTrackName='';
+  }
   const CHORDS=[[1,1.2247,1.5,1.8371],[1,1.25,1.5,2],[0.8889,1,1.3333,1.6667],[1,1.125,1.3333,1.6667]];
 
   function IR(ac,s=5){const l=Math.ceil(ac.sampleRate*s),b=ac.createBuffer(2,l,ac.sampleRate);for(let c=0;c<2;c++){const d=b.getChannelData(c);for(let i=0;i<l;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/l,2.5);}return b;}
@@ -328,35 +363,50 @@ window.AmbientAudio=(function(){
     sub.connect(sg);sg.connect(master);sub.start();nodes.push(sub);
   }
 
-  function startMode(){
+  async function startMode(onTrackName){
     stopFlag=false;
-    const f=FREQS[currentMode];
-    if(!f){cycleChords(actx.currentTime+0.3);}
-    else{playSolfeggio(f);}
+    const track=await fetchJamendoStream(currentMode);
+    if(track){
+      playStream(track.url,track.name);
+      if(onTrackName)onTrackName(track.name);
+      // also start soft synth pad underneath
+      if(actx){const f=FREQS[currentMode];if(!f)cycleChords(actx.currentTime+0.3);else playSolfeggio(f);}
+    }else{
+      stopStream();
+      if(onTrackName)onTrackName(null);
+      const f=FREQS[currentMode];
+      if(!f){cycleChords(actx.currentTime+0.3);}
+      else{playSolfeggio(f);}
+    }
   }
 
-  function start(){
+  let _onTrackName=null;
+
+  function start(onTrackName){
     if(playing)return;
+    _onTrackName=onTrackName||null;
     actx=new(window.AudioContext||window.webkitAudioContext)();
     master=actx.createGain();master.gain.setValueAtTime(0,actx.currentTime);
     master.gain.linearRampToValueAtTime(vol,actx.currentTime+3);
     master.connect(actx.destination);
-    createBus();startMode();playing=true;
+    createBus();playing=true;
+    startMode(_onTrackName);
   }
 
   function stop(){
-    if(!playing||!actx)return;
+    if(!playing)return;
+    stopStream();
     stopFlag=true;
-    master.gain.linearRampToValueAtTime(0,actx.currentTime+2);
-    setTimeout(()=>{stopNodes();actx.close();playing=false;},2500);
+    if(actx){master.gain.linearRampToValueAtTime(0,actx.currentTime+2);setTimeout(()=>{stopNodes();actx.close();actx=null;},2500);}
+    playing=false;
   }
 
-  function nextMode(){
+  function nextMode(onTrackName){
     currentMode=(currentMode+1)%MODES.length;
+    const cb=onTrackName||_onTrackName;
     if(playing){
-      stopFlag=true;
-      master.gain.setTargetAtTime(0,actx.currentTime,0.15);
-      setTimeout(()=>{stopNodes();createBus();startMode();master.gain.setTargetAtTime(vol,actx.currentTime,0.5);},600);
+      stopStream();stopFlag=true;
+      if(actx){master.gain.setTargetAtTime(0,actx.currentTime,0.15);setTimeout(()=>{stopNodes();createBus();startMode(cb);master.gain.setTargetAtTime(vol,actx.currentTime,0.5);},600);}
     }
     return MODES[currentMode].name;
   }
@@ -364,9 +414,10 @@ window.AmbientAudio=(function(){
   function setVol(v){
     vol=Math.max(0.05,Math.min(1,v));
     if(master)master.gain.setTargetAtTime(vol,actx.currentTime,0.1);
+    if(streamEl)streamEl.volume=vol;
   }
 
-  return{start,stop,nextMode,setVol,getVol:()=>vol,getModeName:()=>MODES[currentMode].name,getPixabayQ:()=>MODES[currentMode].pixabay,isPlaying:()=>playing};
+  return{start,stop,nextMode,setVol,getVol:()=>vol,getModeName:()=>MODES[currentMode].name,getTrackName:()=>streamTrackName,isPlaying:()=>playing};
 })();
 </script>
 
@@ -1048,12 +1099,12 @@ function Settings({profile,onUpdateProfile,onClearHistory,dir}){
 }
 
 // ── Music bar ─────────────────────────────────────────────────────────────
-function MusicBar({playing,vol,modeName,pixabayQ,onDown,onUp,onNext}){
+function MusicBar({playing,vol,modeName,trackName,onDown,onUp,onNext}){
   if(!playing)return null;
   return(
     <div className="music-bar">
-      <span className="mbar-mode">{modeName}</span>
-      {pixabayQ&&<a href={`https://pixabay.com/music/search/${encodeURIComponent(pixabayQ)}/`} target="_blank" rel="noopener noreferrer" style={{fontSize:9,color:'var(--teal)',textDecoration:'none',fontWeight:600,letterSpacing:'0.04em',flexShrink:0}}>Pixabay ↗</a>}
+      <span className="mbar-mode">{trackName||modeName}</span>
+      {trackName&&<span style={{fontSize:9,color:'var(--teal)',fontWeight:600,letterSpacing:'0.04em',flexShrink:0}}>Jamendo</span>}
       <button className="mbar-btn" onClick={onDown}>−</button>
       <span className="mbar-vol">{Math.round(vol*100)}%</span>
       <button className="mbar-btn" onClick={onUp}>+</button>
@@ -1108,6 +1159,7 @@ function App(){
   const [musicPlaying,setMusicPlaying]=useState(false);
   const [musicVol,setMusicVol]=useState(0.45);
   const [modeName,setModeName]=useState('Ambient Chords');
+  const [trackName,setTrackName]=useState(null);
   const [t,setTweak]=useTweaks(TWEAK_DEFAULTS);
 
   useEffect(()=>{const speeds={fast:'0.2s',normal:'0.36s',slow:'0.58s'};document.documentElement.style.setProperty('--dur',speeds[t.animSpeed]||'0.36s');},[t.animSpeed]);
@@ -1128,12 +1180,12 @@ function App(){
   function switchTab(tab){setDir(tab==='checkin'?'back':'fwd');setNavTab(tab);if(tab==='checkin')setStep(0);}
 
   function toggleMusic(){
-    if(musicPlaying){window.AmbientAudio.stop();setMusicPlaying(false);}
-    else{window.AmbientAudio.start();setMusicPlaying(true);}
+    if(musicPlaying){window.AmbientAudio.stop();setMusicPlaying(false);setTrackName(null);}
+    else{window.AmbientAudio.start(n=>setTrackName(n));setMusicPlaying(true);}
   }
   function volDown(){const v=Math.max(0.05,musicVol-0.12);setMusicVol(v);window.AmbientAudio.setVol(v);}
   function volUp(){const v=Math.min(1,musicVol+0.12);setMusicVol(v);window.AmbientAudio.setVol(v);}
-  function nextMusicMode(){const n=window.AmbientAudio.nextMode();setModeName(n);}
+  function nextMusicMode(){const n=window.AmbientAudio.nextMode(m=>setTrackName(m));setModeName(n);setTrackName(null);}
 
   const inFlow=navTab==='checkin'&&step>0;
 
@@ -1160,7 +1212,7 @@ function App(){
           </div>
         </nav>
 
-        <MusicBar playing={musicPlaying} vol={musicVol} modeName={modeName} pixabayQ={musicPlaying?window.AmbientAudio.getPixabayQ():null} onDown={volDown} onUp={volUp} onNext={nextMusicMode}/>
+        <MusicBar playing={musicPlaying} vol={musicVol} modeName={modeName} trackName={trackName} onDown={volDown} onUp={volUp} onNext={nextMusicMode}/>
         {inFlow&&<StepBar current={step} onStep={goStep}/>}
         {!profile?.onboardingComplete&&<Onboarding onComplete={p=>{setProfile(p);}}/>}
 
