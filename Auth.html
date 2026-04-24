@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Promises — Sign In</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg:        oklch(0.905 0.035 65);
+      --bg-card:   oklch(0.975 0.015 66);
+      --bg-deep:   oklch(0.165 0.038 275);
+      --orange:    oklch(0.625 0.185 48);
+      --orange-l:  oklch(0.725 0.16 52);
+      --orange-s:  oklch(0.625 0.185 48 / 0.1);
+      --orange-b:  oklch(0.625 0.185 48 / 0.35);
+      --teal:      oklch(0.595 0.075 215);
+      --yellow:    oklch(0.835 0.12 85);
+      --text:      oklch(0.155 0.035 275);
+      --t2:        oklch(0.46 0.04 280);
+      --t3:        oklch(0.72 0.025 280);
+      --border:    oklch(0.875 0.022 65);
+      --border-hi: oklch(0.825 0.038 65);
+      --error:     oklch(0.58 0.18 25);
+      --ff: 'Inter', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--ff); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* BG orbs */
+    .bg-orb { position: fixed; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; }
+    .bg-1 { width: 500px; height: 500px; top: -120px; right: -80px; background: var(--orange); opacity: 0.07; }
+    .bg-2 { width: 380px; height: 380px; bottom: -80px; left: -80px; background: var(--teal); opacity: 0.08; }
+
+    /* Animate-UI */
+    @keyframes au-fade-up { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+    @keyframes au-fade-in { from { opacity: 0; } to { opacity: 1; } }
+    .au-1 { animation: au-fade-up 0.55s cubic-bezier(0.22,1,0.36,1) both; }
+    .au-2 { animation: au-fade-up 0.55s 0.08s cubic-bezier(0.22,1,0.36,1) both; }
+    .au-3 { animation: au-fade-up 0.55s 0.16s cubic-bezier(0.22,1,0.36,1) both; }
+    .au-4 { animation: au-fade-up 0.55s 0.24s cubic-bezier(0.22,1,0.36,1) both; }
+    .au-5 { animation: au-fade-up 0.55s 0.32s cubic-bezier(0.22,1,0.36,1) both; }
+    .au-fade { animation: au-fade-in 0.5s ease both; }
+
+    /* Page layout */
+    .page { flex: 1; display: flex; position: relative; z-index: 1; }
+    .left-panel { width: 420px; flex-shrink: 0; background: var(--bg-deep); display: flex; flex-direction: column; justify-content: center; padding: 56px 48px; position: relative; overflow: hidden; }
+    .left-panel::before { content: ''; position: absolute; top: -40%; left: -20%; width: 130%; height: 120%; background: radial-gradient(ellipse at 40% 40%, oklch(0.625 0.185 48 / 0.14), transparent 60%); pointer-events: none; }
+    .right-panel { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 24px; }
+
+    /* Nav */
+    .nav { position: relative; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: 18px 32px; }
+    .nav-logo { font-size: 20px; font-weight: 600; color: var(--orange); text-decoration: none; }
+    .nav-back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--t2); text-decoration: none; transition: color 0.15s; }
+    .nav-back:hover { color: var(--text); }
+
+    /* Left panel content */
+    .lp-eyebrow { font-size: 10px; font-weight: 600; color: var(--orange-l); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 20px; position: relative; z-index: 1; }
+    .lp-h { font-size: 32px; font-weight: 300; line-height: 1.3; color: oklch(0.92 0.025 65); letter-spacing: -0.02em; margin-bottom: 28px; position: relative; z-index: 1; }
+    .lp-h strong { font-weight: 600; color: #fff; }
+    .lp-items { display: flex; flex-direction: column; gap: 16px; position: relative; z-index: 1; }
+    .lp-item { display: flex; align-items: flex-start; gap: 12px; }
+    .lp-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); flex-shrink: 0; margin-top: 5px; }
+    .lp-item-text { font-size: 14px; color: oklch(0.7 0.03 275); line-height: 1.6; font-weight: 300; }
+
+    /* Auth card — HeroUI style */
+    .auth-card {
+      width: 100%; max-width: 420px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 36px 36px 32px;
+      box-shadow: 0 8px 48px oklch(0.155 0.035 275 / 0.1), 0 1px 0 rgba(255,255,255,0.7) inset;
+    }
+
+    /* Tabs — HeroUI */
+    .tabs { display: flex; background: oklch(0.935 0.028 65); border-radius: 12px; padding: 4px; gap: 3px; margin-bottom: 28px; }
+    .tab-btn { flex: 1; padding: 9px 14px; border-radius: 9px; border: none; background: transparent; font-family: var(--ff); font-size: 14px; font-weight: 500; cursor: pointer; color: var(--t2); transition: all 0.2s; }
+    .tab-btn.active { background: var(--bg-card); color: var(--text); box-shadow: 0 1px 6px oklch(0.155 0.035 275 / 0.1); }
+
+    /* HeroUI Input */
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field-label { font-size: 12px; font-weight: 500; color: var(--t2); letter-spacing: 0.01em; }
+    .field-input {
+      width: 100%; background: oklch(0.945 0.022 65); border: 1.5px solid var(--border);
+      border-radius: 10px; padding: 13px 14px; font-family: var(--ff); font-size: 15px;
+      color: var(--text); outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .field-input::placeholder { color: var(--t3); }
+    .field-input:focus { border-color: var(--orange-b); box-shadow: 0 0 0 3px var(--orange-s); }
+    .field-input.err { border-color: var(--error); box-shadow: 0 0 0 3px oklch(0.58 0.18 25 / 0.1); }
+    .field-err { font-size: 11px; color: var(--error); font-weight: 500; }
+
+    /* Checkbox */
+    .check-row { display: flex; align-items: center; gap: 9px; cursor: pointer; }
+    .check-box { width: 17px; height: 17px; border-radius: 5px; border: 1.5px solid var(--border-hi); background: var(--bg-card); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: background 0.15s, border-color 0.15s; }
+    .check-box.checked { background: var(--orange); border-color: var(--orange); }
+    .check-label { font-size: 13px; color: var(--t2); font-weight: 300; }
+    .check-label a { color: var(--orange); text-decoration: none; }
+    .check-label a:hover { text-decoration: underline; }
+
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 20px; border-radius: 10px; font-family: var(--ff); font-size: 14px; font-weight: 500; cursor: pointer; border: none; outline: none; transition: transform 0.14s, box-shadow 0.14s, opacity 0.14s; white-space: nowrap; width: 100%; }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: var(--orange); color: #fff; box-shadow: 0 4px 16px oklch(0.625 0.185 48 / 0.28); font-size: 15px; padding: 14px; }
+    .btn-primary:hover { opacity: 0.9; box-shadow: 0 6px 22px oklch(0.625 0.185 48 / 0.38); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-google { background: var(--bg-card); color: var(--text); border: 1.5px solid var(--border-hi); }
+    .btn-google:hover { background: oklch(0.955 0.018 65); }
+
+    /* Divider with text */
+    .div-text { display: flex; align-items: center; gap: 12px; }
+    .div-line { flex: 1; height: 1px; background: var(--border); }
+    .div-label { font-size: 12px; color: var(--t3); font-weight: 500; white-space: nowrap; }
+
+    /* Form stacks */
+    .form-stack { display: flex; flex-direction: column; gap: 14px; }
+
+    /* Forgot / switch */
+    .form-footer { display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+    .link { color: var(--orange); text-decoration: none; font-weight: 500; }
+    .link:hover { text-decoration: underline; }
+
+    /* Loading spinner */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+
+    /* Success state */
+    @keyframes successPop { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+    .success-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 20px 0; animation: successPop 0.45s cubic-bezier(0.34,1.5,0.64,1) both; text-align: center; }
+    .success-icon { width: 64px; height: 64px; border-radius: 50%; background: oklch(0.665 0.11 155 / 0.15); border: 2px solid oklch(0.665 0.11 155 / 0.3); display: flex; align-items: center; justify-content: center; font-size: 28px; }
+
+    /* Auth card header */
+    .card-eyebrow { font-size: 22px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .card-sub { font-size: 13px; color: var(--t2); font-weight: 300; margin-bottom: 24px; }
+
+    @media (max-width: 820px) {
+      .left-panel { display: none; }
+      .right-panel { padding: 20px 16px; align-items: flex-start; padding-top: 32px; }
+      .auth-card { padding: 28px 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-orb bg-1"></div>
+  <div class="bg-orb bg-2"></div>
+
+  <nav class="nav">
+    <a href="Landing.html" class="nav-logo">Promises</a>
+    <a href="Landing.html" class="nav-back">← Back to home</a>
+  </nav>
+
+  <div class="page">
+    <!-- Left Panel -->
+    <div class="left-panel">
+      <p class="lp-eyebrow">✦ Faith-Based Wellness</p>
+      <h2 class="lp-h">Exchange your feeling<br>for a <strong>Promise.</strong></h2>
+      <div class="lp-items">
+        <div class="lp-item"><div class="lp-dot"></div><p class="lp-item-text">One word check-in every day</p></div>
+        <div class="lp-item"><div class="lp-dot"></div><p class="lp-item-text">Scripture matched to your feeling</p></div>
+        <div class="lp-item"><div class="lp-dot"></div><p class="lp-item-text">A personalised prayer written for you</p></div>
+        <div class="lp-item"><div class="lp-dot"></div><p class="lp-item-text">Worship music for your exact mood</p></div>
+        <div class="lp-item"><div class="lp-dot"></div><p class="lp-item-text">Build a daily spiritual streak</p></div>
+      </div>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="right-panel">
+      <div id="root"></div>
+    </div>
+  </div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const getInitialTab = () => {
+      try { return new URLSearchParams(window.location.search).get('tab') === 'signup' ? 'signup' : 'signin'; }
+      catch { return 'signin'; }
+    };
+
+    function GoogleIcon() {
+      return (
+        <svg width="18" height="18" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+      );
+    }
+
+    function SignIn({ onSwitch, onSuccess }) {
+      const [email, setEmail] = useState('');
+      const [pass, setPass] = useState('');
+      const [errors, setErrors] = useState({});
+      const [loading, setLoading] = useState(false);
+
+      const validate = () => {
+        const e = {};
+        if (!email.includes('@')) e.email = 'Enter a valid email';
+        if (pass.length < 6) e.pass = 'Password must be at least 6 characters';
+        setErrors(e);
+        return Object.keys(e).length === 0;
+      };
+
+      const handleSubmit = (ev) => {
+        ev.preventDefault();
+        if (!validate()) return;
+        setLoading(true);
+        setTimeout(() => { setLoading(false); onSuccess(); }, 1600);
+      };
+
+      return (
+        <form onSubmit={handleSubmit} className="form-stack au-fade">
+          <div>
+            <p className="card-eyebrow">Welcome back</p>
+            <p className="card-sub">Sign in to your Promises account</p>
+          </div>
+
+          <button type="button" className="btn btn-google" onClick={() => { setLoading(true); setTimeout(onSuccess, 1400); }}>
+            <GoogleIcon /> Continue with Google
+          </button>
+
+          <div className="div-text"><div className="div-line"></div><span className="div-label">or continue with email</span><div className="div-line"></div></div>
+
+          <div className="field">
+            <label className="field-label">Email address</label>
+            <input className={`field-input${errors.email ? ' err' : ''}`} type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} />
+            {errors.email && <span className="field-err">{errors.email}</span>}
+          </div>
+
+          <div className="field">
+            <label className="field-label">Password</label>
+            <input className={`field-input${errors.pass ? ' err' : ''}`} type="password" placeholder="••••••••" value={pass} onChange={e => setPass(e.target.value)} />
+            {errors.pass && <span className="field-err">{errors.pass}</span>}
+          </div>
+
+          <div className="form-footer">
+            <label className="check-row" style={{cursor:'pointer'}}>
+              <div style={{width:17,height:17,borderRadius:5,border:'1.5px solid var(--border-hi)',background:'var(--bg-card)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+              </div>
+              <span className="check-label">Remember me</span>
+            </label>
+            <a href="#" className="link">Forgot password?</a>
+          </div>
+
+          <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading ? <><span className="spinner"></span>Signing in…</> : 'Sign In →'}
+          </button>
+
+          <p style={{textAlign:'center',fontSize:13,color:'var(--t2)'}}>
+            Don't have an account? <a href="#" className="link" onClick={e=>{e.preventDefault();onSwitch('signup')}}>Sign up free</a>
+          </p>
+        </form>
+      );
+    }
+
+    function SignUp({ onSwitch, onSuccess }) {
+      const [name, setName] = useState('');
+      const [email, setEmail] = useState('');
+      const [pass, setPass] = useState('');
+      const [agreed, setAgreed] = useState(false);
+      const [errors, setErrors] = useState({});
+      const [loading, setLoading] = useState(false);
+
+      const validate = () => {
+        const e = {};
+        if (name.trim().length < 2) e.name = 'Enter your name';
+        if (!email.includes('@')) e.email = 'Enter a valid email';
+        if (pass.length < 6) e.pass = 'Must be at least 6 characters';
+        if (!agreed) e.agreed = 'Please accept the terms';
+        setErrors(e);
+        return Object.keys(e).length === 0;
+      };
+
+      const handleSubmit = (ev) => {
+        ev.preventDefault();
+        if (!validate()) return;
+        setLoading(true);
+        setTimeout(() => { setLoading(false); onSuccess(); }, 1800);
+      };
+
+      return (
+        <form onSubmit={handleSubmit} className="form-stack au-fade">
+          <div>
+            <p className="card-eyebrow">Create your account</p>
+            <p className="card-sub">Start your daily spiritual journey</p>
+          </div>
+
+          <button type="button" className="btn btn-google" onClick={() => { setLoading(true); setTimeout(onSuccess, 1400); }}>
+            <GoogleIcon /> Continue with Google
+          </button>
+
+          <div className="div-text"><div className="div-line"></div><span className="div-label">or sign up with email</span><div className="div-line"></div></div>
+
+          <div className="field">
+            <label className="field-label">Full name</label>
+            <input className={`field-input${errors.name?' err':''}`} type="text" placeholder="Your name" value={name} onChange={e=>setName(e.target.value)} />
+            {errors.name && <span className="field-err">{errors.name}</span>}
+          </div>
+
+          <div className="field">
+            <label className="field-label">Email address</label>
+            <input className={`field-input${errors.email?' err':''}`} type="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)} />
+            {errors.email && <span className="field-err">{errors.email}</span>}
+          </div>
+
+          <div className="field">
+            <label className="field-label">Password</label>
+            <input className={`field-input${errors.pass?' err':''}`} type="password" placeholder="Create a password" value={pass} onChange={e=>setPass(e.target.value)} />
+            {errors.pass && <span className="field-err">{errors.pass}</span>}
+            {pass.length > 0 && (
+              <div style={{display:'flex',gap:4,marginTop:2}}>
+                {[1,2,3,4].map(i=>(
+                  <div key={i} style={{flex:1,height:3,borderRadius:2,background:pass.length>=i*3?i<=1?'var(--error)':i<=2?'var(--yellow)':'var(--teal)':'var(--border)',transition:'background 0.3s'}}></div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <label className="check-row" onClick={()=>setAgreed(!agreed)}>
+            <div className={`check-box${agreed?' checked':''}`}>{agreed&&<svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
+            <span className="check-label">I agree to the <a href="#" onClick={e=>e.stopPropagation()}>Terms</a> and <a href="#" onClick={e=>e.stopPropagation()}>Privacy Policy</a></span>
+          </label>
+          {errors.agreed && <span className="field-err" style={{marginTop:-8}}>{errors.agreed}</span>}
+
+          <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading ? <><span className="spinner"></span>Creating account…</> : 'Create Account →'}
+          </button>
+
+          <p style={{textAlign:'center',fontSize:13,color:'var(--t2)'}}>
+            Already have an account? <a href="#" className="link" onClick={e=>{e.preventDefault();onSwitch('signin')}}>Sign in</a>
+          </p>
+        </form>
+      );
+    }
+
+    function SuccessScreen({ name }) {
+      useEffect(() => {
+        const t = setTimeout(() => { window.location.href = 'Promises.html'; }, 2200);
+        return () => clearTimeout(t);
+      }, []);
+      return (
+        <div className="success-wrap">
+          <div className="success-icon">✦</div>
+          <p style={{fontSize:20,fontWeight:600,color:'var(--text)'}}>You're in!</p>
+          <p style={{fontSize:14,color:'var(--t2)',fontWeight:300}}>Taking you to your first check-in…</p>
+          <div style={{width:180,height:4,borderRadius:2,background:'var(--border)',overflow:'hidden',marginTop:8}}>
+            <div style={{height:'100%',borderRadius:2,background:'var(--orange)',width:'100%',animation:'progLoad 2s linear both'}}></div>
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      const [tab, setTab] = useState(getInitialTab());
+      const [success, setSuccess] = useState(false);
+
+      if (success) {
+        return (
+          <div className="auth-card" style={{textAlign:'center'}}>
+            <style>{`@keyframes progLoad { from { transform: scaleX(0); transform-origin: left; } to { transform: scaleX(1); } }`}</style>
+            <SuccessScreen />
+          </div>
+        );
+      }
+
+      return (
+        <div className="auth-card">
+          <div className="tabs au-1">
+            <button className={`tab-btn${tab==='signin'?' active':''}`} onClick={()=>setTab('signin')}>Sign In</button>
+            <button className={`tab-btn${tab==='signup'?' active':''}`} onClick={()=>setTab('signup')}>Sign Up</button>
+          </div>
+          {tab === 'signin'
+            ? <SignIn onSwitch={setTab} onSuccess={()=>setSuccess(true)} />
+            : <SignUp onSwitch={setTab} onSuccess={()=>setSuccess(true)} />
+          }
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

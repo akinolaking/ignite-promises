@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Promises — Daily Check-In</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <style>
+    /* ── Brand palette · Headspace -0.03 oklch L ── */
+    :root {
+      --bg:         oklch(0.905 0.035 65);
+      --bg-card:    oklch(0.965 0.018 66);
+      --bg-up:      oklch(0.935 0.026 65);
+      --bg-deep:    oklch(0.165 0.038 275);
+      --orange:     oklch(0.625 0.185 48);
+      --orange-l:   oklch(0.725 0.16 52);
+      --orange-d:   oklch(0.52 0.185 48);
+      --orange-s:   oklch(0.625 0.185 48 / 0.1);
+      --orange-b:   oklch(0.625 0.185 48 / 0.35);
+      --teal:       oklch(0.595 0.075 215);
+      --teal-s:     oklch(0.595 0.075 215 / 0.12);
+      --yellow:     oklch(0.835 0.12 85);
+      --yellow-s:   oklch(0.835 0.12 85 / 0.16);
+      --green:      oklch(0.625 0.13 155);
+      --green-s:    oklch(0.625 0.13 155 / 0.12);
+      --text:       oklch(0.155 0.035 275);
+      --t2:         oklch(0.46 0.04 280);
+      --t3:         oklch(0.68 0.025 280);
+      --border:     oklch(0.86 0.025 65);
+      --border-hi:  oklch(0.815 0.04 65);
+      --r:          16px;
+      --rb:         12px;
+      --ff:         'Inter', sans-serif;
+      --dur:        0.38s;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body, #root { height: 100%; font-family: var(--ff); -webkit-font-smoothing: antialiased; overflow: hidden; }
+    body { background: var(--bg); color: var(--text); }
+    ::-webkit-scrollbar { width: 0; }
+
+    /* ── Canvas ── */
+    #bg-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+    /* ── Shell ── */
+    .app-wrap { position: relative; z-index: 1; height: 100%; display: flex; justify-content: center; }
+    .shell { width: 100%; max-width: 430px; height: 100%; display: flex; flex-direction: column; }
+    .content { flex: 1; overflow-y: auto; padding: 16px 16px 36px; display: flex; flex-direction: column; gap: 12px; }
+
+    /* ── HeroUI Glass Card ── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 22px;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 2px 20px oklch(0.155 0.035 275 / 0.07), 0 1px 0 rgba(255,255,255,0.8) inset;
+    }
+    .card-hi { border-color: var(--border-hi); box-shadow: 0 4px 28px oklch(0.155 0.035 275 / 0.1), 0 1px 0 rgba(255,255,255,0.9) inset; }
+    .card-dark { background: var(--bg-deep); border-color: oklch(0.22 0.04 275); color: oklch(0.92 0.025 65); }
+    .card::before { content: ''; position: absolute; top: 0; left: 20%; right: 20%; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent); pointer-events: none; }
+
+    /* ── Navbar ── */
+    .nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 16px;
+      background: oklch(0.905 0.035 65 / 0.82);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .nav-brand { font-size: 20px; font-weight: 600; color: var(--orange); letter-spacing: -0.4px; text-decoration: none; }
+    .nav-right { display: flex; align-items: center; gap: 8px; }
+    .avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--orange), var(--orange-d)); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #fff; border: 2px solid rgba(255,255,255,0.5); }
+
+    /* ── Music btn ── */
+    .music-btn { width: 32px; height: 32px; border-radius: 50%; background: var(--orange-s); border: 1px solid var(--border-hi); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s, transform 0.14s; }
+    .music-btn:hover { background: oklch(0.625 0.185 48 / 0.16); }
+    .music-btn:active { transform: scale(0.93); }
+    .music-btn svg { width: 13px; height: 13px; fill: var(--orange); }
+
+    /* ── Steps ── */
+    .steps { display: flex; align-items: center; justify-content: center; gap: 5px; padding: 9px 16px 4px; flex-shrink: 0; }
+    .sdot { height: 3px; border-radius: 2px; background: var(--border); transition: all 0.42s cubic-bezier(0.34, 1.3, 0.64, 1); }
+    .sdot.done  { background: var(--green); width: 16px; }
+    .sdot.active { background: var(--orange); width: 28px; box-shadow: 0 0 8px oklch(0.625 0.185 48 / 0.5); }
+    .sdot.idle  { width: 8px; }
+
+    /* ── Chip ── */
+    .chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+    .chip-o  { background: var(--orange-s); color: var(--orange);  border: 1px solid oklch(0.625 0.185 48 / 0.22); }
+    .chip-y  { background: var(--yellow-s); color: oklch(0.5 0.12 80); border: 1px solid oklch(0.835 0.12 85 / 0.28); }
+    .chip-g  { background: var(--green-s);  color: var(--green);   border: 1px solid oklch(0.625 0.13 155 / 0.24); }
+    .chip-t  { background: var(--teal-s);   color: var(--teal);    border: 1px solid oklch(0.595 0.075 215 / 0.22); }
+
+    /* ── Buttons ── */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 13px 20px; border-radius: var(--rb); font-family: var(--ff); font-size: 14px; font-weight: 500; cursor: pointer; border: none; outline: none; transition: transform 0.14s, opacity 0.14s, box-shadow 0.14s; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+    .btn:active { transform: scale(0.97); }
+    .btn-p { background: var(--orange); color: #fff; box-shadow: 0 4px 18px oklch(0.625 0.185 48 / 0.3); }
+    .btn-p:hover { opacity: 0.9; box-shadow: 0 6px 24px oklch(0.625 0.185 48 / 0.4); }
+    .btn-ghost { background: var(--bg-up); color: var(--t2); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: var(--bg-card); color: var(--text); }
+    .btn-spotify { background: #1DB954; color: #fff; }
+    .btn-spotify:hover { background: #1ed760; }
+    .btn-w { width: 100%; }
+    .btn-row { display: flex; gap: 9px; }
+    .btn-row .btn { flex: 1; font-size: 13px; padding: 12px 12px; }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* ── Input ── */
+    .inp { width: 100%; background: var(--bg-up); border: 1.5px solid var(--border); border-radius: 11px; padding: 14px 15px; font-family: var(--ff); font-size: 17px; color: var(--text); outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+    .inp::placeholder { color: var(--t3); }
+    .inp:focus { border-color: var(--orange-b); box-shadow: 0 0 0 3px var(--orange-s); }
+
+    /* ── Progress ── */
+    .prog-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; font-size: 12px; color: var(--t2); }
+    .prog-track { height: 5px; border-radius: 3px; background: var(--border); overflow: hidden; }
+    .prog-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--orange), var(--yellow)); transition: width 1.1s cubic-bezier(0.34, 1.2, 0.64, 1); }
+
+    /* ── Scripture ── */
+    .scripture { font-size: 19px; line-height: 1.7; color: var(--text); font-weight: 300; letter-spacing: -0.01em; }
+    .scrip-ref { font-size: 13px; color: var(--orange); font-weight: 500; margin-top: 10px; letter-spacing: 0.02em; }
+
+    /* ── Prayer ── */
+    .prayer-p { font-size: 15px; line-height: 1.9; color: var(--t2); }
+
+    /* ── Song ── */
+    .song-art { width: 52px; height: 52px; border-radius: 10px; background: linear-gradient(135deg, var(--orange), var(--orange-d)); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 4px 16px oklch(0.625 0.185 48 / 0.25); }
+
+    /* ── Share card ── */
+    .share-bg { background: var(--bg-deep); border: 1px solid oklch(0.625 0.185 48 / 0.2); border-radius: 20px; padding: 40px 28px 32px; text-align: center; position: relative; overflow: hidden; }
+    .share-bg::before { content: ''; position: absolute; top: -40%; left: -20%; width: 140%; height: 130%; background: radial-gradient(ellipse at 50% 30%, oklch(0.625 0.185 48 / 0.12), transparent 60%); pointer-events: none; }
+    .share-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; background: var(--orange); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; vertical-align: middle; margin-left: 4px; }
+
+    /* ── Feeling badge ── */
+    .feeling-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 5px 9px; border-radius: 999px; background: var(--orange-s); border: 1px solid var(--orange-b); font-size: 14px; font-weight: 500; color: var(--orange); }
+
+    /* ── Tooltip ── */
+    .tip-w { position: relative; display: inline-block; }
+    .tip { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: var(--green); color: #fff; padding: 4px 10px; border-radius: 7px; font-size: 11px; font-weight: 600; white-space: nowrap; animation: tipIn 0.18s ease both; }
+    @keyframes tipIn { from { opacity: 0; transform: translateX(-50%) translateY(4px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+    /* ── Animations (animate-ui style) ── */
+    @keyframes au-fade-up  { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
+    @keyframes au-fade-in  { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes au-scale-in { from { opacity: 0; transform: scale(0.88); } to { opacity: 1; transform: scale(1); } }
+    .a-up   { animation: au-fade-up  var(--dur) cubic-bezier(0.22,1,0.36,1) both; }
+    .a-fade { animation: au-fade-in  var(--dur) ease both; }
+    .a-pop  { animation: au-scale-in 0.42s cubic-bezier(0.34,1.5,0.64,1) both; }
+    .d1 { animation-delay: 0.05s; } .d2 { animation-delay: 0.11s; } .d3 { animation-delay: 0.17s; }
+    .d4 { animation-delay: 0.23s; } .d5 { animation-delay: 0.29s; }
+
+    /* ── Tweaks overlay ── */
+    .tweaks-overlay { position: fixed; inset: 0; z-index: 100; pointer-events: none; }
+    .tweaks-overlay > * { pointer-events: all; }
+
+    /* ── Waveform visualiser ── */
+    .wave-wrap { display: flex; align-items: center; justify-content: center; gap: 3px; height: 24px; }
+    .wave-bar { width: 3px; border-radius: 2px; background: var(--orange); opacity: 0.7; animation: waveAnim 1.4s ease-in-out infinite; }
+    @keyframes waveAnim { 0%,100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
+  </style>
+</head>
+<body>
+  <canvas id="bg-canvas"></canvas>
+  <div id="root"></div>
+
+  <!-- ── Animated Background ── -->
+  <script>
+  (function() {
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    let W, H, time = 0;
+
+    // Warm brand palette orbs
+    const ORB_DEFS = [
+      { cr:242, cg:130, cb:70,  rx:0.15, ry:0.20, r:0.38, sp:0.00018, alpha:0.10, phase:0.0 },   // orange top-left
+      { cr:255, cg:200, cb:100, rx:0.78, ry:0.12, r:0.30, sp:0.00014, alpha:0.08, phase:2.1 },   // yellow top-right
+      { cr:220, cg:100, cb:55,  rx:0.50, ry:0.85, r:0.35, sp:0.00020, alpha:0.07, phase:4.2 },   // deep orange bottom
+      { cr:150, cg:180, cb:220, rx:0.88, ry:0.60, r:0.28, sp:0.00012, alpha:0.07, phase:1.2 },   // cool blue right
+      { cr:200, cg:155, cb:80,  rx:0.25, ry:0.65, r:0.25, sp:0.00016, alpha:0.06, phase:3.5 },   // warm amber left
+      { cr:255, cg:220, cb:150, rx:0.55, ry:0.45, r:0.20, sp:0.00022, alpha:0.05, phase:5.8 },   // light gold center
+    ];
+
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+
+    // Simplex-like smooth noise via sin composition
+    function smoothNoise(x, y, t) {
+      return (Math.sin(x * 1.3 + t * 0.7) * Math.cos(y * 0.9 + t * 0.5) +
+              Math.sin(x * 2.1 - t * 0.4) * Math.sin(y * 1.7 + t * 0.3)) * 0.5;
+    }
+
+    function draw() {
+      time++;
+      ctx.clearRect(0, 0, W, H);
+
+      // Warm base gradient — matches --bg
+      const base = ctx.createLinearGradient(0, 0, W * 0.6, H);
+      base.addColorStop(0,   'oklch(0.915 0.038 62)');
+      base.addColorStop(0.5, 'oklch(0.900 0.032 67)');
+      base.addColorStop(1,   'oklch(0.910 0.030 70)');
+      ctx.fillStyle = base;
+      ctx.fillRect(0, 0, W, H);
+
+      // Draw each orb with smooth wandering path
+      ORB_DEFS.forEach((o, i) => {
+        const t = time * o.sp;
+        const nx = smoothNoise(i, 0, t) * 0.18;
+        const ny = smoothNoise(0, i, t) * 0.18;
+        const cx = (o.rx + nx) * W;
+        const cy = (o.ry + ny) * H;
+        const radius = o.r * Math.min(W, H) * (1 + 0.06 * Math.sin(time * 0.0008 + o.phase));
+        const pulsed = o.alpha * (1 + 0.18 * Math.sin(time * 0.0012 + o.phase * 1.3));
+
+        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+        grad.addColorStop(0,   `rgba(${o.cr},${o.cg},${o.cb},${pulsed})`);
+        grad.addColorStop(0.45,`rgba(${o.cr},${o.cg},${o.cb},${pulsed * 0.45})`);
+        grad.addColorStop(1,   `rgba(${o.cr},${o.cg},${o.cb},0)`);
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+      });
+
+      // Subtle horizontal wave overlay
+      ctx.save();
+      ctx.globalAlpha = 0.018;
+      for (let y = 0; y < H; y += 80) {
+        const wave = Math.sin(time * 0.0006 + y * 0.01) * 30;
+        const grad2 = ctx.createLinearGradient(0, y + wave, W, y + wave + 60);
+        grad2.addColorStop(0, 'rgba(242,130,70,0)');
+        grad2.addColorStop(0.5, 'rgba(242,130,70,1)');
+        grad2.addColorStop(1, 'rgba(242,130,70,0)');
+        ctx.fillStyle = grad2;
+        ctx.fillRect(0, y + wave, W, 1.5);
+      }
+      ctx.restore();
+
+      requestAnimationFrame(draw);
+    }
+
+    resize();
+    draw();
+    window.addEventListener('resize', resize);
+  })();
+  </script>
+
+  <!-- ── Extended Ambient Music Engine ── -->
+  <script>
+  window.AmbientAudio = (function() {
+    let actx, master, playing = false, scheduledNodes = [], stopFlag = false;
+
+    // Chord progressions (freq ratios over root A2 = 110Hz)
+    const CHORDS = [
+      [1, 1.2247, 1.5, 1.8371],   // Am  — anxious / fearful
+      [1, 1.25,   1.5, 2.0],      // C   — hopeful
+      [0.8889, 1, 1.3333, 1.6667],// G   — peaceful
+      [1, 1.125,  1.3333, 1.6667],// F   — gentle resolve
+      [0.9375, 1, 1.25,   1.5],   // Em  — contemplative
+    ];
+
+    function buildIR(ac, secs = 4.5) {
+      const len = Math.ceil(ac.sampleRate * secs);
+      const buf = ac.createBuffer(2, len, ac.sampleRate);
+      for (let c = 0; c < 2; c++) {
+        const d = buf.getChannelData(c);
+        for (let i = 0; i < len; i++) {
+          d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6);
+        }
+      }
+      return buf;
+    }
+
+    function makeOsc(ac, freq, type, gain, dest) {
+      const osc = ac.createOscillator();
+      const g   = ac.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      g.gain.value = gain;
+      osc.connect(g);
+      g.connect(dest);
+      return { osc, g };
+    }
+
+    function scheduleChordCycle(ac, revSend, masterGain, startTime) {
+      if (stopFlag) return;
+      const chordDur  = 10 + Math.random() * 4;   // 10–14 s per chord
+      const fadeLen   = 2.8;
+      const chordData = CHORDS[Math.floor(Math.random() * CHORDS.length)];
+      const rootHz    = 110 * (0.98 + Math.random() * 0.04); // slight detune variation
+      const now       = startTime;
+
+      chordData.forEach((ratio, i) => {
+        const freq = rootHz * ratio;
+        const vol  = 0.018 / (i + 1);
+
+        // Pad oscillator (sine + slight triangle blend)
+        ['sine','triangle'].forEach((type, ti) => {
+          const { osc, g } = makeOsc(ac, freq * (ti === 1 ? 1.0015 : 1), type, vol * (ti === 1 ? 0.3 : 1), revSend);
+          g.gain.setValueAtTime(0, now);
+          g.gain.linearRampToValueAtTime(vol, now + fadeLen);
+          g.gain.setValueAtTime(vol, now + chordDur - fadeLen);
+          g.gain.linearRampToValueAtTime(0, now + chordDur);
+          osc.start(now);
+          osc.stop(now + chordDur + 0.1);
+          scheduledNodes.push(osc);
+        });
+
+        // LFO tremolo
+        const lfo = ac.createOscillator();
+        const lfoG = ac.createGain();
+        lfo.type = 'sine';
+        lfo.frequency.value = 0.06 + i * 0.018 + Math.random() * 0.015;
+        lfoG.gain.value = 0.006;
+        lfo.connect(lfoG);
+        lfo.start(now); lfo.stop(now + chordDur + 0.1);
+        scheduledNodes.push(lfo);
+      });
+
+      // Melodic arpeggiated top note (very gentle, high register)
+      const melFreqs = chordData.map(r => rootHz * r * 2);
+      melFreqs.forEach((f, idx) => {
+        const noteDur = 3.5;
+        const noteStart = now + idx * (chordDur / melFreqs.length);
+        const { osc, g } = makeOsc(ac, f, 'sine', 0.007, revSend);
+        g.gain.setValueAtTime(0, noteStart);
+        g.gain.linearRampToValueAtTime(0.007, noteStart + 0.6);
+        g.gain.setValueAtTime(0.007, noteStart + noteDur - 0.8);
+        g.gain.linearRampToValueAtTime(0, noteStart + noteDur);
+        osc.start(noteStart);
+        osc.stop(noteStart + noteDur + 0.1);
+        scheduledNodes.push(osc);
+      });
+
+      // Schedule next chord with overlap
+      const nextStart = now + chordDur - fadeLen;
+      setTimeout(() => scheduleChordCycle(ac, revSend, masterGain, nextStart), (chordDur - fadeLen - 1) * 1000);
+    }
+
+    function start() {
+      if (playing) return;
+      stopFlag = false;
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      master = actx.createGain();
+      master.gain.setValueAtTime(0, actx.currentTime);
+      master.gain.linearRampToValueAtTime(0.55, actx.currentTime + 5);
+      master.connect(actx.destination);
+
+      // Reverb
+      const conv = actx.createConvolver();
+      conv.buffer = buildIR(actx, 5);
+      const revGain = actx.createGain();
+      revGain.gain.value = 0.55;
+      conv.connect(revGain);
+      revGain.connect(master);
+
+      // Dry send too
+      const dry = actx.createGain();
+      dry.gain.value = 0.3;
+      dry.connect(master);
+
+      // Combined send
+      const revSend = actx.createGain();
+      revSend.gain.value = 1;
+      revSend.connect(conv);
+      revSend.connect(dry);
+
+      // Sub bass drone — very low, barely felt
+      const sub = actx.createOscillator();
+      const subG = actx.createGain();
+      sub.type = 'sine';
+      sub.frequency.value = 55;
+      subG.gain.value = 0.012;
+      sub.connect(subG); subG.connect(master);
+      sub.start();
+      scheduledNodes.push(sub);
+
+      // Pink-ish noise breath
+      const nLen = actx.sampleRate * 8;
+      const nBuf = actx.createBuffer(2, nLen, actx.sampleRate);
+      for (let c = 0; c < 2; c++) {
+        const d = nBuf.getChannelData(c);
+        let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0;
+        for (let i = 0; i < nLen; i++) {
+          const wh = Math.random() * 2 - 1;
+          b0 = 0.99886*b0 + wh*0.0555179; b1 = 0.99332*b1 + wh*0.0750759;
+          b2 = 0.96900*b2 + wh*0.1538520; b3 = 0.86650*b3 + wh*0.3104856;
+          b4 = 0.55000*b4 + wh*0.5329522; b5 = -0.7616*b5 - wh*0.0168980;
+          d[i] = (b0+b1+b2+b3+b4+b5 + wh*0.5362) * 0.11;
+        }
+      }
+      const noise = actx.createBufferSource();
+      noise.buffer = nBuf; noise.loop = true;
+      const nFilt = actx.createBiquadFilter();
+      nFilt.type = 'lowpass'; nFilt.frequency.value = 280; nFilt.Q.value = 0.5;
+      const nGain = actx.createGain(); nGain.gain.value = 0.04;
+      // Breathing LFO on noise
+      const breathLFO = actx.createOscillator();
+      const breathG = actx.createGain();
+      breathLFO.type = 'sine'; breathLFO.frequency.value = 0.055;
+      breathG.gain.value = 0.025;
+      breathLFO.connect(breathG); breathG.connect(nGain.gain);
+      noise.connect(nFilt); nFilt.connect(nGain); nGain.connect(revSend);
+      noise.start(); breathLFO.start();
+      scheduledNodes.push(noise, breathLFO);
+
+      // Start chord cycle
+      scheduleChordCycle(actx, revSend, master, actx.currentTime + 0.5);
+      playing = true;
+    }
+
+    function stop() {
+      if (!playing || !actx) return;
+      stopFlag = true;
+      master.gain.linearRampToValueAtTime(0, actx.currentTime + 2.5);
+      setTimeout(() => {
+        scheduledNodes.forEach(n => { try { n.stop(); } catch(e) {} });
+        scheduledNodes = [];
+        actx.close();
+        playing = false;
+      }, 3000);
+    }
+
+    return { start, stop, isPlaying: () => playing };
+  })();
+  </script>
+
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "accentColor": "orange",
+      "animSpeed": "normal",
+      "showStreak": true
+    }/*EDITMODE-END*/;
+
+    const ACCENTS = {
+      orange: { '--orange':'oklch(0.625 0.185 48)', '--orange-l':'oklch(0.725 0.16 52)', '--orange-d':'oklch(0.52 0.185 48)' },
+      amber:  { '--orange':'oklch(0.64 0.17 60)',   '--orange-l':'oklch(0.74 0.15 64)',  '--orange-d':'oklch(0.53 0.17 60)' },
+      coral:  { '--orange':'oklch(0.60 0.18 38)',   '--orange-l':'oklch(0.70 0.16 42)',  '--orange-d':'oklch(0.50 0.18 38)' },
+    };
+
+    /* ── Mini components ── */
+    const Chip = ({ label, variant = 'o' }) => <span className={`chip chip-${variant}`}>{label}</span>;
+
+    const Btn = ({ children, variant='p', full, onClick, disabled, className='' }) => (
+      <button className={`btn btn-${variant}${full?' btn-w':''} ${className}`}
+        onClick={onClick} disabled={disabled}>{children}</button>
+    );
+
+    const Card = ({ children, hi, dark, className='' }) => (
+      <div className={`card${hi?' card-hi':''}${dark?' card-dark':''} ${className}`}>{children}</div>
+    );
+
+    const Progress = ({ value, label, sublabel }) => (
+      <div>
+        <div className="prog-row"><span>{label}</span><span style={{color:'var(--text)'}}>{sublabel}</span></div>
+        <div className="prog-track"><div className="prog-fill" style={{width:`${value}%`}}></div></div>
+      </div>
+    );
+
+    function MusicBtn({ playing, onToggle }) {
+      return (
+        <button className="music-btn" onClick={onToggle} title={playing ? 'Pause music' : 'Play ambient music'}>
+          {playing ? (
+            <svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+          ) : (
+            <svg viewBox="0 0 24 24"><path d="M8 5.14v14l11-7-11-7z"/></svg>
+          )}
+        </button>
+      );
+    }
+
+    function WaveViz() {
+      return (
+        <div className="wave-wrap">
+          {[0.4,0.7,1,0.8,0.5,0.9,0.6,0.75,0.45,0.85].map((h, i) => (
+            <div key={i} className="wave-bar"
+              style={{ height: `${h*20}px`, animationDelay: `${i*0.13}s`, animationDuration: `${1.2+i*0.08}s` }} />
+          ))}
+        </div>
+      );
+    }
+
+    /* ── Screen 1: Check-In ── */
+    function CheckIn({ onNext }) {
+      const [val, setVal] = useState('');
+      const clean = val.trim().replace(/\s+/g, '');
+      return (
+        <div className="content">
+          <div style={{height:6}}></div>
+          <Card hi className="a-up">
+            <p style={{fontSize:11,color:'var(--t2)',textTransform:'uppercase',letterSpacing:'0.1em',fontWeight:600,marginBottom:10}}>Today's check-in</p>
+            <p style={{fontSize:24,lineHeight:1.3,fontWeight:300,marginBottom:6,color:'var(--text)',letterSpacing:'-0.02em'}}>
+              How are you feeling<br/>right now?
+            </p>
+            <p style={{fontSize:13,color:'var(--t2)',lineHeight:1.55,marginBottom:20,fontWeight:300}}>One word. Be honest. Let it go.</p>
+            <input className="inp" placeholder="e.g. anxious, joyful, lost…" maxLength={30}
+              value={val} onChange={e => setVal(e.target.value.replace(/\s/g,''))}
+              onKeyDown={e => e.key==='Enter' && clean && onNext(clean)} autoFocus />
+          </Card>
+
+          <div className="a-up d2" style={{display:'flex',flexDirection:'column',gap:9}}>
+            <Btn full onClick={() => onNext(clean)} disabled={!clean}>Exchange It →</Btn>
+            <p style={{textAlign:'center',fontSize:12,color:'var(--t3)',fontWeight:300}}>Your word is received. Something sacred returns.</p>
+          </div>
+
+          <Card className="a-up d3">
+            <div style={{display:'flex',alignItems:'center',gap:12}}>
+              <div style={{width:40,height:40,borderRadius:'50%',background:'var(--orange-s)',border:'1px solid oklch(0.625 0.185 48 / 0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>✦</div>
+              <div style={{flex:1}}>
+                <p style={{fontSize:13,fontWeight:500,marginBottom:2}}>Daily Rhythm</p>
+                <p style={{fontSize:12,color:'var(--t2)',fontWeight:300}}>Check in each day to build your streak</p>
+              </div>
+              <Chip label="4 days" variant="y"/>
+            </div>
+          </Card>
+        </div>
+      );
+    }
+
+    /* ── Screen 2: Affirmation ── */
+    function Affirmation({ feeling, onPrayer, onMusic, showStreak }) {
+      return (
+        <div className="content">
+          <div className="a-fade" style={{display:'flex',alignItems:'center',gap:7,flexWrap:'wrap'}}>
+            <span style={{fontSize:13,color:'var(--t2)',fontWeight:300}}>You felt</span>
+            <span className="feeling-badge"><span style={{fontSize:15}}>✦</span> {feeling}</span>
+            <span style={{fontSize:13,color:'var(--t2)',fontWeight:300}}>— here's what was waiting.</span>
+          </div>
+
+          <Card hi className="a-up d1">
+            <div style={{marginBottom:14}}><Chip label="Your Affirmation" variant="y"/></div>
+            <p className="scripture">
+              "Fear not, for I am with you; be not dismayed, for I am your God. I will strengthen you, yes, I will help you, I will uphold you with My righteous right hand."
+            </p>
+            <p className="scrip-ref">— Isaiah 41:10</p>
+          </Card>
+
+          {showStreak && (
+            <Card className="a-up d2"><Progress value={57} label="Daily streak" sublabel="4 of 7 days"/></Card>
+          )}
+
+          <Card className="a-up d3">
+            <p style={{fontSize:13,color:'var(--t2)',lineHeight:1.65,marginBottom:10,fontWeight:300}}>
+              This word was spoken over humanity's deepest fear — you are not alone in feeling this.
+            </p>
+            <div style={{height:1,background:'var(--border)',margin:'10px 0'}}></div>
+            <Chip label="Isaiah 41 • Old Testament" variant="o"/>
+          </Card>
+
+          <div className="btn-row a-up d4">
+            <Btn variant="p" onClick={onPrayer}>See Your Prayer</Btn>
+            <Btn variant="ghost" onClick={onMusic}>Skip to Music</Btn>
+          </div>
+        </div>
+      );
+    }
+
+    /* ── Screen 3: Prayer ── */
+    function Prayer({ onNext }) {
+      const [copied, setCopied] = useState(false);
+      const lines = [
+        { t:"Heavenly Father,", hi:true },
+        { t:"In this moment of uncertainty and fear, I come before You — not with answers, but with my whole, weary self.", hi:false },
+        { t:"You promised never to forsake me. I receive that promise now. Let Your peace, which surpasses understanding, guard my heart and my mind.", hi:false },
+        { t:"Where anxiety has spoken, may Your Word speak louder. Where I feel small, remind me whose hands formed me.", hi:false },
+        { t:"I release what I cannot carry. I trust what I cannot see.", hi:false },
+        { t:"Amen.", hi:true },
+      ];
+      return (
+        <div className="content">
+          <Card hi>
+            <div style={{marginBottom:16}}><Chip label="Prayer For You" variant="o"/></div>
+            {lines.map((l, i) => (
+              <p key={i} className={`prayer-p a-up d${Math.min(i+1,5)}`}
+                style={{marginBottom:l.hi?10:15,fontWeight:l.hi?500:300,color:l.hi?'var(--text)':'var(--t2)'}}>
+                {l.t}
+              </p>
+            ))}
+          </Card>
+          <div className="btn-row a-up d5">
+            <div className="tip-w" style={{flex:1}}>
+              <Btn variant="ghost" full onClick={() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }}>Copy Prayer</Btn>
+              {copied && <span className="tip">Copied ✓</span>}
+            </div>
+            <Btn variant="p" onClick={onNext}>Next → Music</Btn>
+          </div>
+        </div>
+      );
+    }
+
+    /* ── Screen 4: Music ── */
+    function Music({ onNext, musicPlaying }) {
+      return (
+        <div className="content">
+          <Card hi className="a-up d1">
+            <div style={{marginBottom:14}}><Chip label="Worship For This Moment" variant="y"/></div>
+            <div style={{display:'flex',alignItems:'center',gap:13,marginBottom:16}}>
+              <div className="song-art">♪</div>
+              <div>
+                <p style={{fontWeight:500,fontSize:16}}>Waymaker</p>
+                <p style={{fontSize:13,color:'var(--t2)',marginTop:3,fontWeight:300}}>Sinach • Praise &amp; Worship</p>
+              </div>
+              {musicPlaying && <div style={{marginLeft:'auto'}}><WaveViz/></div>}
+            </div>
+            <p style={{fontSize:13,color:'var(--t2)',marginBottom:14,lineHeight:1.65,fontWeight:300}}>
+              Chosen for a heart carrying fear — this song speaks to the God who moves when the way seems closed.
+            </p>
+            <Btn variant="spotify" full>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+              Open in Spotify
+            </Btn>
+          </Card>
+
+          <Card className="a-up d2">
+            <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:10}}>
+              <Chip label="From Your Church" variant="t"/>
+              <Chip label="Pastor's Note" variant="o"/>
+            </div>
+            <p style={{fontSize:16,lineHeight:1.7,fontWeight:300,color:'var(--text)',marginBottom:8}}>
+              "You are not defined by what you carry. You are defined by the One who carried it all."
+            </p>
+            <p style={{fontSize:12,color:'var(--t2)',fontWeight:300}}>Sunday Series: <em>Unshakeable</em></p>
+          </Card>
+
+          <Btn variant="p" full className="a-up d3" onClick={onNext}>Create Share Card →</Btn>
+        </div>
+      );
+    }
+
+    /* ── Screen 5: Share ── */
+    function Share({ feeling, onRestart }) {
+      return (
+        <div className="content">
+          <div className="share-bg a-pop">
+            <div style={{fontSize:26,marginBottom:14,opacity:0.5}}>✦</div>
+            <p style={{fontSize:19,lineHeight:1.65,fontWeight:300,color:'oklch(0.92 0.025 65)',marginBottom:4,position:'relative',zIndex:1}}>
+              "Fear not, for I am with you; be not dismayed, for I am your God."
+            </p>
+            <p style={{fontSize:13,color:'var(--orange-l)',fontWeight:500,marginBottom:18,position:'relative',zIndex:1}}>— Isaiah 41:10</p>
+            <div style={{height:1,background:'rgba(255,255,255,0.1)',marginBottom:14}}></div>
+            <p style={{fontSize:11,color:'oklch(0.6 0.03 275)',textTransform:'uppercase',letterSpacing:'0.1em',fontWeight:600}}>
+              My word was <span style={{color:'var(--orange-l)'}}>{feeling}</span>. God answered.
+            </p>
+            <p style={{fontSize:11,color:'oklch(0.55 0.03 275)',letterSpacing:'0.1em',textTransform:'uppercase',fontWeight:600,marginTop:16}}>
+              Promises <span className="share-pill">App</span>
+            </p>
+          </div>
+          <div className="a-up d2">
+            <div className="btn-row" style={{marginBottom:9}}>
+              <Btn variant="ghost">Download</Btn>
+              <Btn variant="ghost">WhatsApp</Btn>
+              <Btn variant="ghost">Instagram</Btn>
+            </div>
+            <Btn variant="p" full onClick={onRestart}>↺ Start Over</Btn>
+          </div>
+        </div>
+      );
+    }
+
+    /* ── Steps indicator ── */
+    function Steps({ current }) {
+      return (
+        <div className="steps">
+          {[0,1,2,3,4].map(i => (
+            <div key={i} className={`sdot ${i<current?'done':i===current?'active':'idle'}`}></div>
+          ))}
+        </div>
+      );
+    }
+
+    /* ── Main App ── */
+    function App() {
+      const [screen, setScreen]       = useState(0);
+      const [feeling, setFeeling]     = useState('');
+      const [tweaks, setTweaks]       = useState(TWEAK_DEFAULTS);
+      const [showTweaks, setShowTweaks] = useState(false);
+      const [musicPlaying, setMusicPlaying] = useState(false);
+
+      useEffect(() => {
+        const root = document.documentElement;
+        const acc = ACCENTS[tweaks.accentColor] || ACCENTS.orange;
+        Object.entries(acc).forEach(([k,v]) => root.style.setProperty(k,v));
+        root.style.setProperty('--dur', tweaks.animSpeed==='slow'?'0.65s':tweaks.animSpeed==='fast'?'0.18s':'0.38s');
+      }, [tweaks]);
+
+      useEffect(() => {
+        const h = e => {
+          if (e.data?.type==='__activate_edit_mode')   setShowTweaks(true);
+          if (e.data?.type==='__deactivate_edit_mode') setShowTweaks(false);
+        };
+        window.addEventListener('message', h);
+        window.parent.postMessage({type:'__edit_mode_available'}, '*');
+        return () => window.removeEventListener('message', h);
+      }, []);
+
+      const toggleMusic = () => {
+        if (musicPlaying) { window.AmbientAudio.stop(); setMusicPlaying(false); }
+        else              { window.AmbientAudio.start(); setMusicPlaying(true); }
+      };
+
+      const go = n => setScreen(n);
+
+      const screens = [
+        <CheckIn       key={`s0-${screen}`} onNext={f => { setFeeling(f); go(1); }} />,
+        <Affirmation   key={`s1-${screen}`} feeling={feeling} onPrayer={() => go(2)} onMusic={() => go(3)} showStreak={tweaks.showStreak} />,
+        <Prayer        key={`s2-${screen}`} onNext={() => go(3)} />,
+        <Music         key={`s3-${screen}`} onNext={() => go(4)} musicPlaying={musicPlaying} />,
+        <Share         key={`s4-${screen}`} feeling={feeling} onRestart={() => { setFeeling(''); go(0); }} />,
+      ];
+
+      return (
+        <div className="app-wrap">
+          <div className="shell">
+            <nav className="nav">
+              <a href="Landing.html" className="nav-brand">Promises</a>
+              <div className="nav-right">
+                <MusicBtn playing={musicPlaying} onToggle={toggleMusic}/>
+                <Chip label={['Check-In','Affirmation','Prayer','Music','Share'][screen]} variant="o"/>
+                <div className="avatar">JD</div>
+              </div>
+            </nav>
+            <Steps current={screen}/>
+            {screens[screen]}
+          </div>
+
+          {showTweaks && (
+            <div className="tweaks-overlay">
+              <TweaksPanel onClose={() => { setShowTweaks(false); window.parent.postMessage({type:'__edit_mode_dismissed'},'*'); }}>
+                <TweakSection title="Accent">
+                  <TweakRadio id="accentColor" options={['orange','amber','coral']} value={tweaks.accentColor} onChange={v => { setTweaks(p => ({...p,accentColor:v})); window.parent.postMessage({type:'__edit_mode_set_keys',edits:{accentColor:v}},'*'); }}/>
+                </TweakSection>
+                <TweakSection title="Animation Speed">
+                  <TweakRadio id="animSpeed" options={['fast','normal','slow']} value={tweaks.animSpeed} onChange={v => { setTweaks(p => ({...p,animSpeed:v})); window.parent.postMessage({type:'__edit_mode_set_keys',edits:{animSpeed:v}},'*'); }}/>
+                </TweakSection>
+                <TweakSection title="Widgets">
+                  <TweakToggle id="showStreak" label="Show daily streak" value={tweaks.showStreak} onChange={v => { setTweaks(p => ({...p,showStreak:v})); window.parent.postMessage({type:'__edit_mode_set_keys',edits:{showStreak:v}},'*'); }}/>
+                </TweakSection>
+              </TweaksPanel>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+  </script>
+</body>
+</html>
