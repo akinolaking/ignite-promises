@@ -4,756 +4,1131 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Promises — Daily Check-In</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#ede4d3">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Promises">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
   <style>
-    /* ── Brand palette · Headspace -0.03 oklch L ── */
     :root {
-      --bg:         oklch(0.905 0.035 65);
-      --bg-card:    oklch(0.965 0.018 66);
-      --bg-up:      oklch(0.935 0.026 65);
-      --bg-deep:    oklch(0.165 0.038 275);
-      --orange:     oklch(0.625 0.185 48);
-      --orange-l:   oklch(0.725 0.16 52);
-      --orange-d:   oklch(0.52 0.185 48);
-      --orange-s:   oklch(0.625 0.185 48 / 0.1);
-      --orange-b:   oklch(0.625 0.185 48 / 0.35);
-      --teal:       oklch(0.595 0.075 215);
-      --teal-s:     oklch(0.595 0.075 215 / 0.12);
-      --yellow:     oklch(0.835 0.12 85);
-      --yellow-s:   oklch(0.835 0.12 85 / 0.16);
-      --green:      oklch(0.625 0.13 155);
-      --green-s:    oklch(0.625 0.13 155 / 0.12);
-      --text:       oklch(0.155 0.035 275);
-      --t2:         oklch(0.46 0.04 280);
-      --t3:         oklch(0.68 0.025 280);
-      --border:     oklch(0.86 0.025 65);
-      --border-hi:  oklch(0.815 0.04 65);
-      --r:          16px;
-      --rb:         12px;
-      --ff:         'Inter', sans-serif;
-      --dur:        0.38s;
+      --bg:        oklch(0.908 0.033 64);
+      --bg-card:   oklch(0.958 0.016 64);
+      --bg-up:     oklch(0.932 0.024 64);
+      --bg-deep:   oklch(0.162 0.036 275);
+      --orange:    oklch(0.622 0.184 47);
+      --orange-l:  oklch(0.72 0.158 52);
+      --orange-d:  oklch(0.52 0.184 47);
+      --orange-s:  oklch(0.622 0.184 47 / 0.10);
+      --orange-b:  oklch(0.622 0.184 47 / 0.32);
+      --teal:      oklch(0.592 0.072 215);
+      --teal-s:    oklch(0.592 0.072 215 / 0.12);
+      --yellow:    oklch(0.832 0.118 84);
+      --yellow-s:  oklch(0.832 0.118 84 / 0.16);
+      --green:     oklch(0.622 0.128 154);
+      --green-s:   oklch(0.622 0.128 154 / 0.12);
+      --text:      oklch(0.152 0.033 275);
+      --t2:        oklch(0.46 0.038 278);
+      --t3:        oklch(0.70 0.022 278);
+      --border:    oklch(0.862 0.022 64);
+      --border-hi: oklch(0.815 0.038 64);
+      --error:     oklch(0.58 0.178 24);
+      --ff: 'Inter', sans-serif;
+      --dur: 0.36s;
+      --ease: cubic-bezier(0.22,1,0.36,1);
+      --nav-h: 58px;
+      --bot-h: 68px;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body, #root { height: 100%; font-family: var(--ff); -webkit-font-smoothing: antialiased; overflow: hidden; }
     body { background: var(--bg); color: var(--text); }
     ::-webkit-scrollbar { width: 0; }
-
-    /* ── Canvas ── */
     #bg-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 
-    /* ── Shell ── */
     .app-wrap { position: relative; z-index: 1; height: 100%; display: flex; justify-content: center; }
     .shell { width: 100%; max-width: 430px; height: 100%; display: flex; flex-direction: column; }
-    .content { flex: 1; overflow-y: auto; padding: 16px 16px 36px; display: flex; flex-direction: column; gap: 12px; }
 
-    /* ── HeroUI Glass Card ── */
-    .card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--r);
-      padding: 22px;
-      position: relative;
-      overflow: hidden;
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      box-shadow: 0 2px 20px oklch(0.155 0.035 275 / 0.07), 0 1px 0 rgba(255,255,255,0.8) inset;
+    /* ── Screen ── */
+    .screen-wrap { flex: 1; min-height: 0; position: relative; overflow: hidden; }
+    .screen {
+      position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      padding: 16px 16px calc(var(--bot-h) + 52px);
+      display: flex; flex-direction: column; gap: 12px;
     }
-    .card-hi { border-color: var(--border-hi); box-shadow: 0 4px 28px oklch(0.155 0.035 275 / 0.1), 0 1px 0 rgba(255,255,255,0.9) inset; }
-    .card-dark { background: var(--bg-deep); border-color: oklch(0.22 0.04 275); color: oklch(0.92 0.025 65); }
-    .card::before { content: ''; position: absolute; top: 0; left: 20%; right: 20%; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent); pointer-events: none; }
+    .screen.enter-fwd  { animation: slideFwd  var(--dur) var(--ease) both; }
+    .screen.enter-back { animation: slideBack var(--dur) var(--ease) both; }
+    .screen.enter-up   { animation: slideUp   var(--dur) var(--ease) both; }
+    @keyframes slideFwd  { from{opacity:0;transform:translateX(26px)} to{opacity:1;transform:none} }
+    @keyframes slideBack { from{opacity:0;transform:translateX(-26px)} to{opacity:1;transform:none} }
+    @keyframes slideUp   { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
 
-    /* ── Navbar ── */
+    /* ── Card — NO overflow:hidden so animations don't clip children ── */
+    .card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px;
+      padding: 20px 20px 20px;
+      position: relative;
+      box-shadow: 0 2px 16px oklch(0.155 0.035 275 / 0.065), 0 1px 0 rgba(255,255,255,0.82) inset;
+    }
+    .card::before { content:''; position:absolute; top:0; left:16%; right:16%; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.72),transparent); pointer-events:none; }
+    .card-hi   { border-color: var(--border-hi); box-shadow: 0 3px 22px oklch(0.155 0.035 275 / 0.09), 0 1px 0 rgba(255,255,255,0.88) inset; }
+    .card-dark { background: var(--bg-deep); border-color: oklch(0.22 0.04 275); color: oklch(0.92 0.022 64); }
+    .card-orange { background: linear-gradient(135deg, var(--orange-s), oklch(0.832 0.118 84 / 0.08)); border-color: oklch(0.622 0.184 47 / 0.2); }
+
+    /* ── Nav ── */
     .nav {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 13px 16px;
-      background: oklch(0.905 0.035 65 / 0.82);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
+      height: var(--nav-h); padding: 0 16px;
+      background: oklch(0.908 0.033 64 / 0.88); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border); flex-shrink: 0;
     }
-    .nav-brand { font-size: 20px; font-weight: 600; color: var(--orange); letter-spacing: -0.4px; text-decoration: none; }
-    .nav-right { display: flex; align-items: center; gap: 8px; }
-    .avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--orange), var(--orange-d)); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #fff; border: 2px solid rgba(255,255,255,0.5); }
+    .nav-brand { font-size: 18px; font-weight: 600; color: var(--orange); letter-spacing: -0.4px; text-decoration: none; }
+    .nav-center { flex: 1; display: flex; justify-content: center; }
+    .nav-right  { display: flex; align-items: center; gap: 8px; }
+    .nav-back   { display: flex; align-items: center; gap: 4px; border: none; background: transparent; cursor: pointer; color: var(--orange); font-size: 13px; font-weight: 500; font-family: var(--ff); padding: 6px 2px; -webkit-tap-highlight-color: transparent; }
+    .avatar     { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--orange), var(--orange-d)); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #fff; border: 2px solid rgba(255,255,255,0.5); cursor: pointer; flex-shrink: 0; }
+    .music-btn  { width: 30px; height: 30px; border-radius: 50%; background: var(--orange-s); border: 1px solid var(--border-hi); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s, transform 0.12s; flex-shrink: 0; }
+    .music-btn:active { transform: scale(0.9); }
+    .music-btn svg { width: 12px; height: 12px; fill: var(--orange); }
 
-    /* ── Music btn ── */
-    .music-btn { width: 32px; height: 32px; border-radius: 50%; background: var(--orange-s); border: 1px solid var(--border-hi); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s, transform 0.14s; }
-    .music-btn:hover { background: oklch(0.625 0.185 48 / 0.16); }
-    .music-btn:active { transform: scale(0.93); }
-    .music-btn svg { width: 13px; height: 13px; fill: var(--orange); }
+    /* ── Music bar ── */
+    .music-bar { display: flex; align-items: center; height: 34px; padding: 0 14px; gap: 8px; background: oklch(0.908 0.033 64 / 0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .mbar-mode { flex: 1; font-size: 10.5px; font-weight: 600; color: var(--orange); letter-spacing: 0.05em; }
+    .mbar-btn { width: 22px; height: 22px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-up); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; color: var(--t2); transition: background 0.12s; font-family: var(--ff); }
+    .mbar-btn:hover { background: var(--orange-s); color: var(--orange); }
+    .mbar-vol { font-size: 11px; color: var(--t3); min-width: 30px; text-align: center; }
 
-    /* ── Steps ── */
-    .steps { display: flex; align-items: center; justify-content: center; gap: 5px; padding: 9px 16px 4px; flex-shrink: 0; }
-    .sdot { height: 3px; border-radius: 2px; background: var(--border); transition: all 0.42s cubic-bezier(0.34, 1.3, 0.64, 1); }
-    .sdot.done  { background: var(--green); width: 16px; }
-    .sdot.active { background: var(--orange); width: 28px; box-shadow: 0 0 8px oklch(0.625 0.185 48 / 0.5); }
-    .sdot.idle  { width: 8px; }
+    /* ── Step bar ── */
+    .step-bar { display: flex; align-items: center; padding: 10px 16px 6px; gap: 4px; flex-shrink: 0; }
+    .step-seg  { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: default; }
+    .step-seg.back-nav { cursor: pointer; }
+    .step-track { height: 2.5px; width: 100%; border-radius: 2px; background: var(--border); transition: background 0.35s; }
+    .step-seg.done   .step-track { background: var(--green); }
+    .step-seg.active .step-track { background: var(--orange); box-shadow: 0 0 6px oklch(0.622 0.184 47 / 0.4); }
+    .step-name { font-size: 9px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--t3); transition: color 0.35s; }
+    .step-seg.active .step-name { color: var(--orange); }
+    .step-seg.done   .step-name { color: var(--green); }
+
+    /* ── Bottom nav ── */
+    .bot-nav { height: var(--bot-h); display: flex; align-items: center; border-top: 1px solid var(--border); background: oklch(0.908 0.033 64 / 0.92); backdrop-filter: blur(20px); flex-shrink: 0; padding: 0 8px; gap: 4px; }
+    .bot-tab  { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 8px; border-radius: 12px; cursor: pointer; transition: background 0.15s; border: none; background: transparent; font-family: var(--ff); -webkit-tap-highlight-color: transparent; }
+    .bot-tab:hover { background: var(--orange-s); }
+    .bot-tab.active { background: var(--orange-s); }
+    .bot-tab svg { width: 20px; height: 20px; }
+    .bot-tab-label { font-size: 10px; font-weight: 500; transition: color 0.15s; }
+    .bot-tab.active svg, .bot-tab.active .bot-tab-label { color: var(--orange); }
+    .bot-tab:not(.active) svg, .bot-tab:not(.active) .bot-tab-label { color: var(--t3); }
 
     /* ── Chip ── */
     .chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
-    .chip-o  { background: var(--orange-s); color: var(--orange);  border: 1px solid oklch(0.625 0.185 48 / 0.22); }
-    .chip-y  { background: var(--yellow-s); color: oklch(0.5 0.12 80); border: 1px solid oklch(0.835 0.12 85 / 0.28); }
-    .chip-g  { background: var(--green-s);  color: var(--green);   border: 1px solid oklch(0.625 0.13 155 / 0.24); }
-    .chip-t  { background: var(--teal-s);   color: var(--teal);    border: 1px solid oklch(0.595 0.075 215 / 0.22); }
+    .chip-o { background: var(--orange-s); color: var(--orange);  border: 1px solid oklch(0.622 0.184 47 / 0.22); }
+    .chip-y { background: var(--yellow-s); color: oklch(0.48 0.118 79); border: 1px solid oklch(0.832 0.118 84 / 0.28); }
+    .chip-g { background: var(--green-s);  color: var(--green);   border: 1px solid oklch(0.622 0.128 154 / 0.24); }
+    .chip-t { background: var(--teal-s);   color: var(--teal);    border: 1px solid oklch(0.592 0.072 215 / 0.22); }
 
     /* ── Buttons ── */
-    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 13px 20px; border-radius: var(--rb); font-family: var(--ff); font-size: 14px; font-weight: 500; cursor: pointer; border: none; outline: none; transition: transform 0.14s, opacity 0.14s, box-shadow 0.14s; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 14px 20px; border-radius: 12px; font-family: var(--ff); font-size: 14px; font-weight: 500; cursor: pointer; border: none; outline: none; transition: transform 0.12s, opacity 0.12s; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
     .btn:active { transform: scale(0.97); }
-    .btn-p { background: var(--orange); color: #fff; box-shadow: 0 4px 18px oklch(0.625 0.185 48 / 0.3); }
-    .btn-p:hover { opacity: 0.9; box-shadow: 0 6px 24px oklch(0.625 0.185 48 / 0.4); }
+    .btn-p     { background: var(--orange); color: #fff; box-shadow: 0 4px 16px oklch(0.622 0.184 47 / 0.28); }
+    .btn-p:hover { opacity: 0.9; }
     .btn-ghost { background: var(--bg-up); color: var(--t2); border: 1px solid var(--border); }
     .btn-ghost:hover { background: var(--bg-card); color: var(--text); }
     .btn-spotify { background: #1DB954; color: #fff; }
-    .btn-spotify:hover { background: #1ed760; }
-    .btn-w { width: 100%; }
+    .btn-danger { background: oklch(0.58 0.178 24 / 0.08); color: var(--error); border: 1px solid oklch(0.58 0.178 24 / 0.18); }
+    .btn-w   { width: 100%; }
     .btn-row { display: flex; gap: 9px; }
-    .btn-row .btn { flex: 1; font-size: 13px; padding: 12px 12px; }
+    .btn-row .btn { flex: 1; font-size: 13px; padding: 13px 10px; }
     .btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-    /* ── Input ── */
-    .inp { width: 100%; background: var(--bg-up); border: 1.5px solid var(--border); border-radius: 11px; padding: 14px 15px; font-family: var(--ff); font-size: 17px; color: var(--text); outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+    /* ── Inputs ── */
+    .inp { width: 100%; background: var(--bg-up); border: 1.5px solid var(--border); border-radius: 11px; padding: 14px 16px; font-family: var(--ff); font-size: 16px; color: var(--text); outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
     .inp::placeholder { color: var(--t3); }
     .inp:focus { border-color: var(--orange-b); box-shadow: 0 0 0 3px var(--orange-s); }
+    .inp-sm { font-size: 14px; padding: 11px 13px; border-radius: 9px; }
+    .sel { width: 100%; background: var(--bg-up); border: 1.5px solid var(--border); border-radius: 9px; padding: 11px 13px; font-family: var(--ff); font-size: 14px; color: var(--text); outline: none; cursor: pointer; }
+    .sel:focus { border-color: var(--orange-b); box-shadow: 0 0 0 3px var(--orange-s); }
+    .toggle { width: 42px; height: 24px; border-radius: 12px; border: none; cursor: pointer; transition: background 0.2s; flex-shrink: 0; position: relative; }
+    .toggle::after { content:''; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff; transition:transform 0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.18); }
+    .toggle.on { background: var(--orange); }
+    .toggle.on::after { transform: translateX(18px); }
+    .toggle.off { background: var(--border-hi); }
 
     /* ── Progress ── */
-    .prog-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; font-size: 12px; color: var(--t2); }
-    .prog-track { height: 5px; border-radius: 3px; background: var(--border); overflow: hidden; }
-    .prog-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--orange), var(--yellow)); transition: width 1.1s cubic-bezier(0.34, 1.2, 0.64, 1); }
+    .prog-track { height: 4px; border-radius: 3px; background: var(--border); overflow: hidden; }
+    .prog-fill  { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--orange), var(--yellow)); transition: width 1.1s cubic-bezier(0.34,1.2,0.64,1); }
 
-    /* ── Scripture ── */
-    .scripture { font-size: 19px; line-height: 1.7; color: var(--text); font-weight: 300; letter-spacing: -0.01em; }
-    .scrip-ref { font-size: 13px; color: var(--orange); font-weight: 500; margin-top: 10px; letter-spacing: 0.02em; }
+    /* ── Misc UI ── */
+    .feeling-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 5px 10px; border-radius: 999px; background: var(--orange-s); border: 1px solid var(--orange-b); font-size: 14px; font-weight: 500; color: var(--orange); }
+    .scripture { font-size: 18px; line-height: 1.76; color: var(--text); font-weight: 300; letter-spacing: -0.01em; font-style: italic; }
+    .scrip-ref { font-size: 13px; color: var(--orange); font-weight: 500; margin-top: 12px; font-style: normal; }
+    .prayer-line { font-size: 15px; line-height: 1.88; }
+    .wave-wrap { display: flex; align-items: center; gap: 2.5px; height: 18px; }
+    .wave-bar { width: 2.5px; border-radius: 2px; background: var(--orange); opacity: 0.7; animation: waveAnim 1.4s ease-in-out infinite; }
+    @keyframes waveAnim { 0%,100%{transform:scaleY(0.2)} 50%{transform:scaleY(1)} }
+    .song-art { width: 52px; height: 52px; border-radius: 11px; background: linear-gradient(135deg, var(--orange), var(--orange-d)); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 4px 14px oklch(0.622 0.184 47 / 0.22); }
+    .milestone { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 10px; background: linear-gradient(135deg, oklch(0.832 0.118 84/0.18), oklch(0.622 0.184 47/0.08)); border: 1px solid oklch(0.832 0.118 84/0.28); font-size: 12px; font-weight: 600; color: oklch(0.48 0.118 79); }
+    .cel-icon { font-size: 42px; display: block; margin-bottom: 10px; animation: celPop 0.55s cubic-bezier(0.34,1.56,0.64,1) both; }
+    @keyframes celPop { from{opacity:0;transform:scale(0.5)} to{opacity:1;transform:scale(1)} }
+    .tip-w { position: relative; }
+    .tip { position: absolute; bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%); background: var(--green); color: #fff; padding: 3px 10px; border-radius: 7px; font-size: 11px; font-weight: 600; white-space: nowrap; animation: tipIn 0.18s ease both; pointer-events: none; z-index: 10; }
+    @keyframes tipIn { from{opacity:0;transform:translateX(-50%) translateY(4px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+    .set-row { display: flex; align-items: center; justify-content: space-between; padding: 13px 0; border-bottom: 1px solid var(--border); gap: 12px; }
+    .set-row:last-child { border-bottom: none; }
+    .set-label { font-size: 14px; font-weight: 500; }
+    .set-sub   { font-size: 12px; color: var(--t2); font-weight: 300; margin-top: 2px; }
+    .stat-box  { background: var(--bg-up); border: 1px solid var(--border); border-radius: 12px; padding: 13px 15px; }
+    .stat-lbl  { font-size: 11px; color: var(--t3); font-weight: 500; margin-bottom: 4px; }
+    .stat-val  { font-size: 20px; font-weight: 600; color: var(--orange); }
+    .hist-entry { display: flex; align-items: flex-start; gap: 13px; padding: 13px 0; border-bottom: 1px solid var(--border); }
+    .hist-entry:last-child { border-bottom: none; padding-bottom: 0; }
+    .hist-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); flex-shrink: 0; margin-top: 6px; }
 
-    /* ── Prayer ── */
-    .prayer-p { font-size: 15px; line-height: 1.9; color: var(--t2); }
+    /* ── Onboarding modal (centered) ── */
+    .ob-overlay { position: fixed; inset: 0; z-index: 200; background: oklch(0.155 0.035 275 / 0.52); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .ob-card { width: 100%; max-width: 390px; background: var(--bg-card); border-radius: 24px; padding: 32px 26px 36px; border: 1px solid var(--border); box-shadow: 0 24px 80px oklch(0.155 0.035 275 / 0.26); animation: cardIn 0.44s cubic-bezier(0.34,1.2,0.64,1) both; max-height: calc(100vh - 48px); overflow-y: auto; }
+    @keyframes cardIn { from{opacity:0;transform:scale(0.92) translateY(16px)} to{opacity:1;transform:none} }
+    .ob-dots { display: flex; gap: 5px; margin-bottom: 24px; }
+    .ob-dot { width: 6px; height: 6px; border-radius: 3px; background: var(--border-hi); transition: all 0.3s; }
+    .ob-dot.active { width: 20px; background: var(--orange); }
+    .ob-step-label { font-size: 10px; font-weight: 600; color: var(--orange); text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 8px; }
+    .ob-h   { font-size: 26px; font-weight: 300; line-height: 1.28; margin-bottom: 6px; letter-spacing: -0.025em; }
+    .ob-sub { font-size: 13px; color: var(--t2); font-weight: 300; line-height: 1.55; margin-bottom: 22px; }
+    .ob-options { display: flex; flex-direction: column; gap: 7px; margin-bottom: 20px; }
+    .ob-option { display: flex; align-items: center; gap: 11px; padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--bg-up); cursor: pointer; transition: border-color 0.18s, background 0.18s; -webkit-tap-highlight-color: transparent; }
+    .ob-option.selected { border-color: var(--orange-b); background: var(--orange-s); }
+    .ob-option-label { font-size: 14px; }
+    .ob-radio { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--border-hi); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: border-color 0.18s; }
+    .ob-option.selected .ob-radio { border-color: var(--orange); }
+    .ob-radio-inner { width: 9px; height: 9px; border-radius: 50%; background: var(--orange); display: none; }
+    .ob-option.selected .ob-radio-inner { display: block; }
 
-    /* ── Song ── */
-    .song-art { width: 52px; height: 52px; border-radius: 10px; background: linear-gradient(135deg, var(--orange), var(--orange-d)); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 4px 16px oklch(0.625 0.185 48 / 0.25); }
+    /* ── Persona grid ── */
+    .persona-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 22px; }
+    .persona-card { border-radius: 12px; overflow: hidden; height: 90px; position: relative; cursor: pointer; border: 2.5px solid transparent; transition: border-color 0.18s, transform 0.15s; background-size: cover; background-position: center; }
+    .persona-card:active { transform: scale(0.97); }
+    .persona-card.selected { border-color: var(--orange); }
+    .persona-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.72), rgba(0,0,0,0.1)); }
+    .persona-label { position: absolute; bottom: 7px; left: 8px; font-size: 11px; font-weight: 600; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+    .persona-check { position: absolute; top: 5px; right: 5px; width: 18px; height: 18px; border-radius: 50%; background: var(--orange); display: flex; align-items: center; justify-content: center; }
 
-    /* ── Share card ── */
-    .share-bg { background: var(--bg-deep); border: 1px solid oklch(0.625 0.185 48 / 0.2); border-radius: 20px; padding: 40px 28px 32px; text-align: center; position: relative; overflow: hidden; }
-    .share-bg::before { content: ''; position: absolute; top: -40%; left: -20%; width: 140%; height: 130%; background: radial-gradient(ellipse at 50% 30%, oklch(0.625 0.185 48 / 0.12), transparent 60%); pointer-events: none; }
-    .share-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; background: var(--orange); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; vertical-align: middle; margin-left: 4px; }
+    /* ── Story simulation ── */
+    .story-overlay { position: fixed; inset: 0; z-index: 300; background: #000; display: flex; flex-direction: column; }
+    .story-bars { position: absolute; top: 10px; left: 8px; right: 8px; z-index: 10; display: flex; gap: 3px; }
+    .story-bar { flex: 1; height: 2.5px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden; }
+    .story-bar-fill { height: 100%; background: #fff; border-radius: 2px; }
+    .story-header { position: absolute; top: 20px; left: 12px; right: 12px; z-index: 10; display: flex; align-items: center; gap: 8px; }
+    .story-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--orange), var(--orange-d)); border: 2px solid var(--orange); flex-shrink: 0; }
+    .story-close { margin-left: auto; background: none; border: none; color: rgba(255,255,255,0.8); font-size: 20px; cursor: pointer; padding: 4px; }
+    .story-reply { position: absolute; bottom: 0; left: 0; right: 0; padding: 12px 16px 36px; display: flex; gap: 12px; align-items: center; }
+    .story-reply-box { flex: 1; border: 1px solid rgba(255,255,255,0.3); border-radius: 22px; padding: 10px 16px; font-size: 14px; color: rgba(255,255,255,0.5); background: transparent; font-family: var(--ff); }
 
-    /* ── Feeling badge ── */
-    .feeling-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 5px 9px; border-radius: 999px; background: var(--orange-s); border: 1px solid var(--orange-b); font-size: 14px; font-weight: 500; color: var(--orange); }
-
-    /* ── Tooltip ── */
-    .tip-w { position: relative; display: inline-block; }
-    .tip { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: var(--green); color: #fff; padding: 4px 10px; border-radius: 7px; font-size: 11px; font-weight: 600; white-space: nowrap; animation: tipIn 0.18s ease both; }
-    @keyframes tipIn { from { opacity: 0; transform: translateX(-50%) translateY(4px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
-
-    /* ── Animations (animate-ui style) ── */
-    @keyframes au-fade-up  { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
-    @keyframes au-fade-in  { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes au-scale-in { from { opacity: 0; transform: scale(0.88); } to { opacity: 1; transform: scale(1); } }
-    .a-up   { animation: au-fade-up  var(--dur) cubic-bezier(0.22,1,0.36,1) both; }
-    .a-fade { animation: au-fade-in  var(--dur) ease both; }
-    .a-pop  { animation: au-scale-in 0.42s cubic-bezier(0.34,1.5,0.64,1) both; }
-    .d1 { animation-delay: 0.05s; } .d2 { animation-delay: 0.11s; } .d3 { animation-delay: 0.17s; }
-    .d4 { animation-delay: 0.23s; } .d5 { animation-delay: 0.29s; }
-
-    /* ── Tweaks overlay ── */
-    .tweaks-overlay { position: fixed; inset: 0; z-index: 100; pointer-events: none; }
-    .tweaks-overlay > * { pointer-events: all; }
-
-    /* ── Waveform visualiser ── */
-    .wave-wrap { display: flex; align-items: center; justify-content: center; gap: 3px; height: 24px; }
-    .wave-bar { width: 3px; border-radius: 2px; background: var(--orange); opacity: 0.7; animation: waveAnim 1.4s ease-in-out infinite; }
-    @keyframes waveAnim { 0%,100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
+    /* ── Animations ── */
+    @keyframes au-up   { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+    @keyframes au-fade { from{opacity:0} to{opacity:1} }
+    @keyframes au-pop  { from{opacity:0;transform:scale(0.9)} to{opacity:1;transform:scale(1)} }
+    .a-up   { animation: au-up   var(--dur) var(--ease) both; }
+    .a-fade { animation: au-fade var(--dur) ease both; }
+    .a-pop  { animation: au-pop  0.42s cubic-bezier(0.34,1.5,0.64,1) both; }
+    .d1{animation-delay:0.05s}.d2{animation-delay:0.10s}.d3{animation-delay:0.15s}
+    .d4{animation-delay:0.20s}.d5{animation-delay:0.25s}.d6{animation-delay:0.30s}
   </style>
 </head>
 <body>
-  <canvas id="bg-canvas"></canvas>
-  <div id="root"></div>
+<canvas id="bg-canvas"></canvas>
+<div id="root"></div>
 
-  <!-- ── Animated Background ── -->
-  <script>
-  (function() {
-    const canvas = document.getElementById('bg-canvas');
-    const ctx = canvas.getContext('2d');
-    let W, H, time = 0;
+<script>
+// Register service worker
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
 
-    // Warm brand palette orbs
-    const ORB_DEFS = [
-      { cr:242, cg:130, cb:70,  rx:0.15, ry:0.20, r:0.38, sp:0.00018, alpha:0.10, phase:0.0 },   // orange top-left
-      { cr:255, cg:200, cb:100, rx:0.78, ry:0.12, r:0.30, sp:0.00014, alpha:0.08, phase:2.1 },   // yellow top-right
-      { cr:220, cg:100, cb:55,  rx:0.50, ry:0.85, r:0.35, sp:0.00020, alpha:0.07, phase:4.2 },   // deep orange bottom
-      { cr:150, cg:180, cb:220, rx:0.88, ry:0.60, r:0.28, sp:0.00012, alpha:0.07, phase:1.2 },   // cool blue right
-      { cr:200, cg:155, cb:80,  rx:0.25, ry:0.65, r:0.25, sp:0.00016, alpha:0.06, phase:3.5 },   // warm amber left
-      { cr:255, cg:220, cb:150, rx:0.55, ry:0.45, r:0.20, sp:0.00022, alpha:0.05, phase:5.8 },   // light gold center
-    ];
+<script>
+(function(){
+  const c=document.getElementById('bg-canvas'),ctx=c.getContext('2d');
+  let W,H,t=0;
+  const ORBS=[{rx:0.12,ry:0.18,r:0.38,sp:0.00016,a:0.09,ph:0,cr:242,cg:130,cb:70},{rx:0.80,ry:0.10,r:0.30,sp:0.00012,a:0.07,ph:2.1,cr:255,cg:200,cb:100},{rx:0.55,ry:0.82,r:0.32,sp:0.00018,a:0.07,ph:4.2,cr:225,cg:110,cb:60},{rx:0.90,ry:0.62,r:0.26,sp:0.00010,a:0.06,ph:1.4,cr:180,cg:150,cb:200}];
+  function sn(x,y,t){return(Math.sin(x*1.3+t*0.7)*Math.cos(y*0.9+t*0.5)+Math.sin(x*2.1-t*0.4)*Math.sin(y*1.7+t*0.3))*0.5;}
+  function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight;}
+  function draw(){
+    t++;ctx.clearRect(0,0,W,H);
+    const bg=ctx.createLinearGradient(0,0,W*0.7,H);
+    bg.addColorStop(0,'#ede4d3');bg.addColorStop(0.6,'#e8ddd0');bg.addColorStop(1,'#ecddd1');
+    ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+    ORBS.forEach((o,i)=>{
+      const tt=t*o.sp,nx=sn(i,0,tt)*0.16,ny=sn(0,i,tt)*0.16;
+      const cx=(o.rx+nx)*W,cy=(o.ry+ny)*H,rad=o.r*Math.min(W,H)*(1+0.055*Math.sin(t*0.0009+o.ph));
+      const al=o.a*(1+0.2*Math.sin(t*0.0011+o.ph*1.2));
+      const g=ctx.createRadialGradient(cx,cy,0,cx,cy,rad);
+      g.addColorStop(0,`rgba(${o.cr},${o.cg},${o.cb},${al})`);
+      g.addColorStop(0.6,`rgba(${o.cr},${o.cg},${o.cb},${al*0.35})`);
+      g.addColorStop(1,`rgba(${o.cr},${o.cg},${o.cb},0)`);
+      ctx.beginPath();ctx.arc(cx,cy,rad,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  resize();draw();window.addEventListener('resize',resize);
+})();
+</script>
 
-    function resize() {
-      W = canvas.width  = window.innerWidth;
-      H = canvas.height = window.innerHeight;
-    }
+<script>
+window.AmbientAudio=(function(){
+  let actx,master,send,playing=false,nodes=[],stopFlag=false;
+  let currentMode=0,vol=0.45;
+  const MODES=[{name:'Ambient Chords'},{name:'963 Hz · Crown'},{name:'528 Hz · Love'},{name:'432 Hz · Harmony'}];
+  const FREQS=[null,963,528,432];
+  const CHORDS=[[1,1.2247,1.5,1.8371],[1,1.25,1.5,2],[0.8889,1,1.3333,1.6667],[1,1.125,1.3333,1.6667]];
 
-    // Simplex-like smooth noise via sin composition
-    function smoothNoise(x, y, t) {
-      return (Math.sin(x * 1.3 + t * 0.7) * Math.cos(y * 0.9 + t * 0.5) +
-              Math.sin(x * 2.1 - t * 0.4) * Math.sin(y * 1.7 + t * 0.3)) * 0.5;
-    }
+  function IR(ac,s=5){const l=Math.ceil(ac.sampleRate*s),b=ac.createBuffer(2,l,ac.sampleRate);for(let c=0;c<2;c++){const d=b.getChannelData(c);for(let i=0;i<l;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/l,2.5);}return b;}
 
-    function draw() {
-      time++;
-      ctx.clearRect(0, 0, W, H);
+  function stopNodes(){nodes.forEach(n=>{try{n.stop()}catch(e){}});nodes=[];}
 
-      // Warm base gradient — matches --bg
-      const base = ctx.createLinearGradient(0, 0, W * 0.6, H);
-      base.addColorStop(0,   'oklch(0.915 0.038 62)');
-      base.addColorStop(0.5, 'oklch(0.900 0.032 67)');
-      base.addColorStop(1,   'oklch(0.910 0.030 70)');
-      ctx.fillStyle = base;
-      ctx.fillRect(0, 0, W, H);
+  function createBus(){
+    const conv=actx.createConvolver();conv.buffer=IR(actx,5);
+    const rg=actx.createGain();rg.gain.value=0.45;conv.connect(rg);rg.connect(master);
+    const dry=actx.createGain();dry.gain.value=0.3;dry.connect(master);
+    send=actx.createGain();send.connect(conv);send.connect(dry);
+  }
 
-      // Draw each orb with smooth wandering path
-      ORB_DEFS.forEach((o, i) => {
-        const t = time * o.sp;
-        const nx = smoothNoise(i, 0, t) * 0.18;
-        const ny = smoothNoise(0, i, t) * 0.18;
-        const cx = (o.rx + nx) * W;
-        const cy = (o.ry + ny) * H;
-        const radius = o.r * Math.min(W, H) * (1 + 0.06 * Math.sin(time * 0.0008 + o.phase));
-        const pulsed = o.alpha * (1 + 0.18 * Math.sin(time * 0.0012 + o.phase * 1.3));
-
-        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
-        grad.addColorStop(0,   `rgba(${o.cr},${o.cg},${o.cb},${pulsed})`);
-        grad.addColorStop(0.45,`rgba(${o.cr},${o.cg},${o.cb},${pulsed * 0.45})`);
-        grad.addColorStop(1,   `rgba(${o.cr},${o.cg},${o.cb},0)`);
-        ctx.beginPath();
-        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-        ctx.fillStyle = grad;
-        ctx.fill();
+  function cycleChords(t0){
+    if(stopFlag)return;
+    const dur=11+Math.random()*5,fade=3,chord=CHORDS[Math.floor(Math.random()*CHORDS.length)],root=110*(0.97+Math.random()*0.06);
+    chord.forEach((r,i)=>{
+      ['sine','triangle'].forEach((tp,ti)=>{
+        const o=actx.createOscillator(),g=actx.createGain();
+        o.type=tp;o.frequency.value=root*r*(ti?1.0016:1);
+        const v=0.016/(i+1)*(ti?0.28:1);
+        g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(v,t0+fade);
+        g.gain.setValueAtTime(v,t0+dur-fade);g.gain.linearRampToValueAtTime(0,t0+dur);
+        o.connect(g);g.connect(send);o.start(t0);o.stop(t0+dur+0.1);nodes.push(o);
       });
+    });
+    setTimeout(()=>cycleChords(t0+dur-fade-0.5),(dur-fade-1.5)*1000);
+  }
 
-      // Subtle horizontal wave overlay
-      ctx.save();
-      ctx.globalAlpha = 0.018;
-      for (let y = 0; y < H; y += 80) {
-        const wave = Math.sin(time * 0.0006 + y * 0.01) * 30;
-        const grad2 = ctx.createLinearGradient(0, y + wave, W, y + wave + 60);
-        grad2.addColorStop(0, 'rgba(242,130,70,0)');
-        grad2.addColorStop(0.5, 'rgba(242,130,70,1)');
-        grad2.addColorStop(1, 'rgba(242,130,70,0)');
-        ctx.fillStyle = grad2;
-        ctx.fillRect(0, y + wave, W, 1.5);
-      }
-      ctx.restore();
+  function playSolfeggio(freq){
+    [freq,freq*2,freq/2,freq*3/2].forEach((f,i)=>{
+      const o=actx.createOscillator(),g=actx.createGain();
+      const lfo=actx.createOscillator(),lg=actx.createGain();
+      o.type='sine';o.frequency.value=f;
+      g.gain.value=0.042/(i+1);
+      lfo.type='sine';lfo.frequency.value=0.038+i*0.007;
+      lg.gain.value=0.013;lfo.connect(lg);lg.connect(g.gain);
+      o.connect(g);g.connect(send);o.start();lfo.start();nodes.push(o,lfo);
+    });
+    // Sub bass breath
+    const sub=actx.createOscillator(),sg=actx.createGain();
+    sub.type='sine';sub.frequency.value=freq/4;sg.gain.value=0.008;
+    sub.connect(sg);sg.connect(master);sub.start();nodes.push(sub);
+  }
 
-      requestAnimationFrame(draw);
+  function startMode(){
+    stopFlag=false;
+    const f=FREQS[currentMode];
+    if(!f){cycleChords(actx.currentTime+0.3);}
+    else{playSolfeggio(f);}
+  }
+
+  function start(){
+    if(playing)return;
+    actx=new(window.AudioContext||window.webkitAudioContext)();
+    master=actx.createGain();master.gain.setValueAtTime(0,actx.currentTime);
+    master.gain.linearRampToValueAtTime(vol,actx.currentTime+3);
+    master.connect(actx.destination);
+    createBus();startMode();playing=true;
+  }
+
+  function stop(){
+    if(!playing||!actx)return;
+    stopFlag=true;
+    master.gain.linearRampToValueAtTime(0,actx.currentTime+2);
+    setTimeout(()=>{stopNodes();actx.close();playing=false;},2500);
+  }
+
+  function nextMode(){
+    currentMode=(currentMode+1)%MODES.length;
+    if(playing){
+      stopFlag=true;
+      master.gain.setTargetAtTime(0,actx.currentTime,0.15);
+      setTimeout(()=>{stopNodes();createBus();startMode();master.gain.setTargetAtTime(vol,actx.currentTime,0.5);},600);
     }
+    return MODES[currentMode].name;
+  }
 
-    resize();
-    draw();
-    window.addEventListener('resize', resize);
-  })();
-  </script>
+  function setVol(v){
+    vol=Math.max(0.05,Math.min(1,v));
+    if(master)master.gain.setTargetAtTime(vol,actx.currentTime,0.1);
+  }
 
-  <!-- ── Extended Ambient Music Engine ── -->
-  <script>
-  window.AmbientAudio = (function() {
-    let actx, master, playing = false, scheduledNodes = [], stopFlag = false;
+  return{start,stop,nextMode,setVol,getVol:()=>vol,getModeName:()=>MODES[currentMode].name,isPlaying:()=>playing};
+})();
+</script>
 
-    // Chord progressions (freq ratios over root A2 = 110Hz)
-    const CHORDS = [
-      [1, 1.2247, 1.5, 1.8371],   // Am  — anxious / fearful
-      [1, 1.25,   1.5, 2.0],      // C   — hopeful
-      [0.8889, 1, 1.3333, 1.6667],// G   — peaceful
-      [1, 1.125,  1.3333, 1.6667],// F   — gentle resolve
-      [0.9375, 1, 1.25,   1.5],   // Em  — contemplative
-    ];
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback}=React;
 
-    function buildIR(ac, secs = 4.5) {
-      const len = Math.ceil(ac.sampleRate * secs);
-      const buf = ac.createBuffer(2, len, ac.sampleRate);
-      for (let c = 0; c < 2; c++) {
-        const d = buf.getChannelData(c);
-        for (let i = 0; i < len; i++) {
-          d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6);
-        }
-      }
-      return buf;
-    }
+// ── Personas ──────────────────────────────────────────────────────────────
+const PERSONAS={
+  nature:    {label:'Nature',    emoji:'🌿',bg:'#1a2e12',img:'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=800&q=80'},
+  ocean:     {label:'Ocean',    emoji:'🌊',bg:'#0c2540',img:'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&w=800&q=80'},
+  mountain:  {label:'Mountain', emoji:'⛰️',bg:'#1a2535',img:'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80'},
+  greenfield:{label:'Greenfield',emoji:'🌾',bg:'#0f2b10',img:'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=800&q=80'},
+  desert:    {label:'Desert',   emoji:'🌅',bg:'#3d1f0a',img:'https://images.unsplash.com/photo-1509316785289-025f5b846b35?auto=format&fit=crop&w=800&q=80'},
+  garden:    {label:'Garden',   emoji:'🌸',bg:'#2a0f1f',img:'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=800&q=80'},
+};
 
-    function makeOsc(ac, freq, type, gain, dest) {
-      const osc = ac.createOscillator();
-      const g   = ac.createGain();
-      osc.type = type;
-      osc.frequency.value = freq;
-      g.gain.value = gain;
-      osc.connect(g);
-      g.connect(dest);
-      return { osc, g };
-    }
+// ── Data ──────────────────────────────────────────────────────────────────
+const CATEGORIES={
+  fear:     {label:'Fear & Anxiety',    color:'chip-o',words:['afraid','anxious','scared','worried','nervous','terrified','overwhelmed','stressed','fearful','panic','uneasy','anxiety']},
+  grief:    {label:'Grief & Loss',      color:'chip-t',words:['sad','grieving','lonely','lost','broken','empty','hopeless','depressed','mourning','hurting','hurt','numb','devastated']},
+  hope:     {label:'Hope & Expectation',color:'chip-g',words:['hopeful','excited','expectant','anticipating','optimistic','joyful','happy','glad','grateful','thankful','blessed','joy']},
+  peace:    {label:'Peace & Stillness', color:'chip-g',words:['peaceful','calm','content','serene','still','rested','quiet','settled','peace']},
+  financial:{label:'Financial Pressure',color:'chip-y',words:['broke','provision','lacking','struggling','needy','debt','poor','insufficient','strapped']},
+  identity: {label:'Identity & Worth',  color:'chip-o',words:['ashamed','guilty','unworthy','rejected','insecure','worthless','shame','condemned','unloved','unwanted']},
+  purpose:  {label:'Purpose & Direction',color:'chip-t',words:['confused','directionless','purposeless','uncertain','unclear','stuck','wandering','unsure']},
+};
+const AFFIRMATIONS={
+  fear:     {verse:'"Fear not, for I am with you; be not dismayed, for I am your God. I will strengthen you, yes, I will help you, I will uphold you with My righteous right hand."',ref:'Isaiah 41:10'},
+  grief:    {verse:'"The Lord is close to the broken-hearted and saves those who are crushed in spirit."',ref:'Psalm 34:18'},
+  hope:     {verse:'"For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, plans to give you hope and a future."',ref:'Jeremiah 29:11'},
+  peace:    {verse:'"The Lord bless you and keep you; the Lord make His face shine on you and be gracious to you; the Lord turn His face toward you and give you peace."',ref:'Numbers 6:24–26'},
+  financial:{verse:'"And my God will meet all your needs according to the riches of His glory in Christ Jesus."',ref:'Philippians 4:19'},
+  identity: {verse:'"For you are fearfully and wonderfully made; your works are wonderful, I know that full well."',ref:'Psalm 139:14'},
+  purpose:  {verse:'"Trust in the Lord with all your heart and lean not on your own understanding; in all your ways submit to Him, and He will make your paths straight."',ref:'Proverbs 3:5–6'},
+  general:  {verse:'"Come to me, all you who are weary and burdened, and I will give you rest."',ref:'Matthew 11:28'},
+};
+const PRAYERS={
+  fear:     n=>[`Heavenly Father,`,`${n||'I'} come before You carrying fear — not with answers, but with a trembling heart that still chooses to trust.`,`You promised never to forsake me. Let Your peace, which surpasses all understanding, guard my heart and mind in Christ Jesus.`,`Where anxiety has spoken loudly, may Your Word speak louder. Cast out every fear with Your perfect love.`,`I release what I cannot carry. I trust what I cannot see.`,`Amen.`],
+  grief:    n=>[`Heavenly Father,`,`${n||'I'} sit with grief that words cannot fully describe. You see every tear.`,`Draw near, Lord. Be the comfort no human arm can give. Let Your presence be the peace that passes understanding.`,`Remind me that weeping endures for a night — but joy comes in the morning.`,`I trust You with what I cannot fix.`,`Amen.`],
+  hope:     n=>[`Heavenly Father,`,`Today ${n?n+' feels':' I feel'} something lifting — a stirring of hope and expectation. Thank You for this gift.`,`Protect this hope. Fan it into flame. Let it not be swallowed by tomorrow's worries.`,`May every expectation find its fulfilment in Your perfect time.`,`Amen.`],
+  peace:    n=>[`Heavenly Father,`,`${n||'I'} receive this moment of stillness as a gift from Your hand. Thank You for the quiet.`,`Guard this peace, Lord. When noise and busyness come, remind me that Your peace is not dependent on circumstances.`,`Let this stillness become a well I return to every day.`,`Amen.`],
+  financial:n=>[`Heavenly Father,`,`${n||'I'} bring the weight of financial pressure before You — the anxiety of not enough.`,`You are Jehovah Jireh — the God who sees and provides. You are already working in ways I cannot see.`,`Give me wisdom in stewardship. Give me peace where I lack. Strengthen my faith to trust Your timeline.`,`Amen.`],
+  identity: n=>[`Heavenly Father,`,`${n||'I'} come carrying the weight of shame — wondering if I am enough, if I am loved.`,`Remind me: I am Yours. Chosen. Loved not for what I do, but for who I am in Your sight.`,`Silence every voice that contradicts Your Word. Let me walk as one fearfully and wonderfully made.`,`Amen.`],
+  purpose:  n=>[`Heavenly Father,`,`${n||'I'} stand at a crossroads — uncertain of the next step. The confusion is real.`,`You are not the author of confusion. What feels unclear to me is completely known to You.`,`Grant courage to trust You in the uncertainty. I commit my way to You.`,`Amen.`],
+  general:  n=>[`Heavenly Father,`,`${n||'I'} come before You today — simply, honestly, with whatever this moment holds.`,`You see everything I cannot name. You invite me — not when I am sorted, but exactly as I am.`,`Be close today. Let Your presence be enough.`,`Amen.`],
+};
+const MUSIC_MAP={
+  fear:     {song:'Waymaker',         artist:'Sinach',             theme:'A song for the God who moves when the way seems closed.'},
+  grief:    {song:'Goodness of God',  artist:'Bethel Music',       theme:'A song for seasons when His goodness feels distant but remains.'},
+  hope:     {song:'Who You Say I Am', artist:'Hillsong Worship',   theme:'A song rooted in the identity God declares over your life.'},
+  peace:    {song:'It Is Well',       artist:'Kristene DiMarco',   theme:'A song anchored in peace that outlasts every storm.'},
+  financial:{song:'Jehovah Jireh',    artist:'Various Artists',    theme:'A song of declaration over the God who provides before we ask.'},
+  identity: {song:'No Longer Slaves', artist:'Bethel Music',       theme:'A song for those stepping out of shame and into freedom.'},
+  purpose:  {song:'Do It Again',      artist:'Elevation Worship',  theme:'A song for those waiting on God to move — again.'},
+  general:  {song:'Promises',         artist:'Maverick City Music', theme:'A curated Promises worship playlist for this moment.'},
+};
+const SERMONS={
+  fear:     {title:'When Fear Speaks Louder Than Faith', series:'Unshakeable',      speaker:'Pastor James O.',excerpt:'"Fear is not the absence of faith — it is the invitation to exercise it. Every time God says \'Fear not\', He is inviting you into His presence in the middle of it."'},
+  grief:    {title:'Grief Is Not the End of the Story', series:'Through the Valley', speaker:'Pastor James O.',excerpt:'"The shortest verse in Scripture is also the most profound: Jesus wept. He didn\'t explain it away. He wept with them — and then He moved."'},
+  hope:     {title:'The Audacity of Hope',              series:'Forward',           speaker:'Pastor James O.',excerpt:'"Biblical hope is confident expectation — the belief that what God has promised is already done, even when your eyes have not seen it yet."'},
+  peace:    {title:'A Peace That Doesn\'t Make Sense',  series:'Unshakeable',       speaker:'Pastor James O.',excerpt:'"The peace of God passes understanding because it doesn\'t come from understanding. It comes from trust."'},
+  financial:{title:'Trusting God With Your Finances',   series:'Kingdom Economics', speaker:'Pastor James O.',excerpt:'"Stewardship begins with surrender. When we hold our resources with an open hand, God can move through what we have."'},
+  identity: {title:'You Are Not What Happened to You',  series:'Redeemed',          speaker:'Pastor James O.',excerpt:'"Your identity is not the sum of your mistakes. It is a fixed point — settled in heaven before you drew your first breath."'},
+  purpose:  {title:'Called Before You Were Confused',   series:'Forward',           speaker:'Pastor James O.',excerpt:'"Confusion about direction is often a sign that God is repositioning you — preparing you for something your current perspective cannot yet see."'},
+  general:  {title:'Come As You Are',                   series:'Open Door',         speaker:'Pastor James O.',excerpt:'"God does not require you to have it together before you come to Him. The invitation is unconditional. \'Come\' — not \'come when you\'re ready\'."'},
+};
+const DENOMINATIONS=['Baptist','Pentecostal','Anglican','Catholic','Methodist','Non-denominational','Other'];
+const CADENCES=[{v:'daily',l:'Daily',d:'One check-in per day'},{v:'weekly',l:'Weekly',d:'Once a week'},{v:'event',l:'Event-only',d:'During church events'}];
+const MILESTONES=[{days:1,label:'First Promise',icon:'🌱'},{days:7,label:'7-Day Streak',icon:'🔥'},{days:30,label:'30-Day Streak',icon:'⚡'},{days:100,label:'100-Day Streak',icon:'💎'},{days:365,label:'One Year',icon:'👑'}];
+const STEP_NAMES=['Word','Promise','Prayer','Music','Share'];
 
-    function scheduleChordCycle(ac, revSend, masterGain, startTime) {
-      if (stopFlag) return;
-      const chordDur  = 10 + Math.random() * 4;   // 10–14 s per chord
-      const fadeLen   = 2.8;
-      const chordData = CHORDS[Math.floor(Math.random() * CHORDS.length)];
-      const rootHz    = 110 * (0.98 + Math.random() * 0.04); // slight detune variation
-      const now       = startTime;
+// ── Utilities ─────────────────────────────────────────────────────────────
+function categorize(word){const w=word.toLowerCase().trim();for(const[k,c]of Object.entries(CATEGORIES)){if(c.words.some(kw=>w.includes(kw)||kw.includes(w)))return k;}return'general';}
+function loadProfile(){try{return JSON.parse(localStorage.getItem('promises_profile')||'null');}catch{return null;}}
+function saveProfile(p){localStorage.setItem('promises_profile',JSON.stringify(p));}
+function loadHistory(){try{return JSON.parse(localStorage.getItem('promises_history')||'[]');}catch{return[];}}
+function saveHistory(h){localStorage.setItem('promises_history',JSON.stringify(h));}
+function loadStreak(){try{return JSON.parse(localStorage.getItem('promises_streak')||'{"current":0,"longest":0,"lastDate":null}');}catch{return{current:0,longest:0,lastDate:null};}}
+function updateStreak(){const s=loadStreak(),today=new Date().toDateString();if(s.lastDate===today)return s;const yesterday=new Date(Date.now()-86400000).toDateString();const nc=s.lastDate===yesterday?s.current+1:1;const u={current:nc,longest:Math.max(nc,s.longest),lastDate:today};localStorage.setItem('promises_streak',JSON.stringify(u));return u;}
+function getMilestone(streak){return[...MILESTONES].reverse().find(m=>streak>=m.days)||null;}
+function formatDate(iso){return new Date(iso).toLocaleDateString('en-GB',{day:'numeric',month:'short'});}
+function initials(name){return name?name.trim().split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2):'✦';}
+function firstName(name){return name?name.trim().split(' ')[0]:'';}
+function getGreeting(profile,history){
+  const hour=new Date().getHours(),part=hour<12?'morning':hour<17?'afternoon':'evening',fn=firstName(profile?.name);
+  if(!history.length)return`Good ${part}${fn?', '+fn:''}.`;
+  const diff=Math.floor((Date.now()-new Date(history[0].date).getTime())/86400000);
+  if(diff===0)return`Checked in today${fn?', '+fn:''} ✦`;
+  if(diff===1)return`Welcome back${fn?', '+fn:''}. Yesterday: "${history[0].feeling}".`;
+  if(diff<7)return`${diff} days since your last check-in${fn?', '+fn:''}.`;
+  return`Good ${part}${fn?', '+fn:''}. Good to have you back.`;
+}
 
-      chordData.forEach((ratio, i) => {
-        const freq = rootHz * ratio;
-        const vol  = 0.018 / (i + 1);
+// ── Canvas story download ─────────────────────────────────────────────────
+function wrapCanvasText(ctx,text,maxW){const words=text.split(' ');const lines=[];let line='';words.forEach(w=>{const t=line?line+' '+w:w;if(ctx.measureText(t).width>maxW&&line){lines.push(line);line=w;}else line=t;});if(line)lines.push(line);return lines;}
+function roundFill(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();ctx.fill();}
+function downloadStory(personaKey,verse,ref,feeling,name){
+  const W=1080,H=1920,canvas=document.createElement('canvas');
+  canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
+  const p=PERSONAS[personaKey]||PERSONAS.nature;
+  ctx.fillStyle=p.bg;ctx.fillRect(0,0,W,H);
+  function render(){
+    const g=ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'rgba(0,0,0,0.32)');g.addColorStop(0.5,'rgba(0,0,0,0.1)');g.addColorStop(1,'rgba(0,0,0,0.8)');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    // App name
+    ctx.font='600 50px sans-serif';ctx.fillStyle='rgba(255,255,255,0.88)';ctx.textAlign='left';ctx.fillText('Promises',80,130);
+    // Feeling badge
+    ctx.font='600 44px sans-serif';ctx.textAlign='center';
+    const bT='✦ '+feeling;const bW=ctx.measureText(bT).width+70;
+    ctx.fillStyle='rgba(209,102,56,0.9)';roundFill(ctx,(W-bW)/2,H/2-230,bW,84,42);
+    ctx.fillStyle='#fff';ctx.fillText(bT,W/2,H/2-176);
+    // Verse
+    ctx.font='300 italic 60px Georgia,serif';ctx.fillStyle='rgba(255,255,255,0.96)';ctx.textAlign='center';
+    const v=verse.replace(/[""]/g,'');const lines=wrapCanvasText(ctx,v,W-200);
+    const lh=88,sy=H/2-90;
+    lines.forEach((l,i)=>ctx.fillText(l,W/2,sy+i*lh));
+    ctx.font='500 46px sans-serif';ctx.fillStyle='#D97757';ctx.fillText('— '+ref,W/2,sy+lines.length*lh+72);
+    if(name){ctx.font='300 38px sans-serif';ctx.fillStyle='rgba(255,255,255,0.5)';ctx.fillText(name,W/2,sy+lines.length*lh+148);}
+    ctx.font='300 30px sans-serif';ctx.fillStyle='rgba(255,255,255,0.3)';ctx.fillText('promises.church',W/2,H-80);
+    try{const a=document.createElement('a');a.download=`promise-${feeling}.png`;a.href=canvas.toDataURL('image/png');a.click();}catch(e){console.warn('Download:',e);}
+  }
+  const img=new Image();img.crossOrigin='anonymous';
+  img.onload=()=>{const r=Math.max(W/img.width,H/img.height);ctx.drawImage(img,(W-img.width*r)/2,(H-img.height*r)/2,img.width*r,img.height*r);render();};
+  img.onerror=()=>render();img.src=p.img;
+}
 
-        // Pad oscillator (sine + slight triangle blend)
-        ['sine','triangle'].forEach((type, ti) => {
-          const { osc, g } = makeOsc(ac, freq * (ti === 1 ? 1.0015 : 1), type, vol * (ti === 1 ? 0.3 : 1), revSend);
-          g.gain.setValueAtTime(0, now);
-          g.gain.linearRampToValueAtTime(vol, now + fadeLen);
-          g.gain.setValueAtTime(vol, now + chordDur - fadeLen);
-          g.gain.linearRampToValueAtTime(0, now + chordDur);
-          osc.start(now);
-          osc.stop(now + chordDur + 0.1);
-          scheduledNodes.push(osc);
-        });
-
-        // LFO tremolo
-        const lfo = ac.createOscillator();
-        const lfoG = ac.createGain();
-        lfo.type = 'sine';
-        lfo.frequency.value = 0.06 + i * 0.018 + Math.random() * 0.015;
-        lfoG.gain.value = 0.006;
-        lfo.connect(lfoG);
-        lfo.start(now); lfo.stop(now + chordDur + 0.1);
-        scheduledNodes.push(lfo);
-      });
-
-      // Melodic arpeggiated top note (very gentle, high register)
-      const melFreqs = chordData.map(r => rootHz * r * 2);
-      melFreqs.forEach((f, idx) => {
-        const noteDur = 3.5;
-        const noteStart = now + idx * (chordDur / melFreqs.length);
-        const { osc, g } = makeOsc(ac, f, 'sine', 0.007, revSend);
-        g.gain.setValueAtTime(0, noteStart);
-        g.gain.linearRampToValueAtTime(0.007, noteStart + 0.6);
-        g.gain.setValueAtTime(0.007, noteStart + noteDur - 0.8);
-        g.gain.linearRampToValueAtTime(0, noteStart + noteDur);
-        osc.start(noteStart);
-        osc.stop(noteStart + noteDur + 0.1);
-        scheduledNodes.push(osc);
-      });
-
-      // Schedule next chord with overlap
-      const nextStart = now + chordDur - fadeLen;
-      setTimeout(() => scheduleChordCycle(ac, revSend, masterGain, nextStart), (chordDur - fadeLen - 1) * 1000);
-    }
-
-    function start() {
-      if (playing) return;
-      stopFlag = false;
-      actx = new (window.AudioContext || window.webkitAudioContext)();
-      master = actx.createGain();
-      master.gain.setValueAtTime(0, actx.currentTime);
-      master.gain.linearRampToValueAtTime(0.55, actx.currentTime + 5);
-      master.connect(actx.destination);
-
-      // Reverb
-      const conv = actx.createConvolver();
-      conv.buffer = buildIR(actx, 5);
-      const revGain = actx.createGain();
-      revGain.gain.value = 0.55;
-      conv.connect(revGain);
-      revGain.connect(master);
-
-      // Dry send too
-      const dry = actx.createGain();
-      dry.gain.value = 0.3;
-      dry.connect(master);
-
-      // Combined send
-      const revSend = actx.createGain();
-      revSend.gain.value = 1;
-      revSend.connect(conv);
-      revSend.connect(dry);
-
-      // Sub bass drone — very low, barely felt
-      const sub = actx.createOscillator();
-      const subG = actx.createGain();
-      sub.type = 'sine';
-      sub.frequency.value = 55;
-      subG.gain.value = 0.012;
-      sub.connect(subG); subG.connect(master);
-      sub.start();
-      scheduledNodes.push(sub);
-
-      // Pink-ish noise breath
-      const nLen = actx.sampleRate * 8;
-      const nBuf = actx.createBuffer(2, nLen, actx.sampleRate);
-      for (let c = 0; c < 2; c++) {
-        const d = nBuf.getChannelData(c);
-        let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0;
-        for (let i = 0; i < nLen; i++) {
-          const wh = Math.random() * 2 - 1;
-          b0 = 0.99886*b0 + wh*0.0555179; b1 = 0.99332*b1 + wh*0.0750759;
-          b2 = 0.96900*b2 + wh*0.1538520; b3 = 0.86650*b3 + wh*0.3104856;
-          b4 = 0.55000*b4 + wh*0.5329522; b5 = -0.7616*b5 - wh*0.0168980;
-          d[i] = (b0+b1+b2+b3+b4+b5 + wh*0.5362) * 0.11;
-        }
-      }
-      const noise = actx.createBufferSource();
-      noise.buffer = nBuf; noise.loop = true;
-      const nFilt = actx.createBiquadFilter();
-      nFilt.type = 'lowpass'; nFilt.frequency.value = 280; nFilt.Q.value = 0.5;
-      const nGain = actx.createGain(); nGain.gain.value = 0.04;
-      // Breathing LFO on noise
-      const breathLFO = actx.createOscillator();
-      const breathG = actx.createGain();
-      breathLFO.type = 'sine'; breathLFO.frequency.value = 0.055;
-      breathG.gain.value = 0.025;
-      breathLFO.connect(breathG); breathG.connect(nGain.gain);
-      noise.connect(nFilt); nFilt.connect(nGain); nGain.connect(revSend);
-      noise.start(); breathLFO.start();
-      scheduledNodes.push(noise, breathLFO);
-
-      // Start chord cycle
-      scheduleChordCycle(actx, revSend, master, actx.currentTime + 0.5);
-      playing = true;
-    }
-
-    function stop() {
-      if (!playing || !actx) return;
-      stopFlag = true;
-      master.gain.linearRampToValueAtTime(0, actx.currentTime + 2.5);
-      setTimeout(() => {
-        scheduledNodes.forEach(n => { try { n.stop(); } catch(e) {} });
-        scheduledNodes = [];
-        actx.close();
-        playing = false;
-      }, 3000);
-    }
-
-    return { start, stop, isPlaying: () => playing };
-  })();
-  </script>
-
-  <script type="text/babel" src="tweaks-panel.jsx"></script>
-  <script type="text/babel">
-    const { useState, useEffect, useRef } = React;
-
-    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
-      "accentColor": "orange",
-      "animSpeed": "normal",
-      "showStreak": true
-    }/*EDITMODE-END*/;
-
-    const ACCENTS = {
-      orange: { '--orange':'oklch(0.625 0.185 48)', '--orange-l':'oklch(0.725 0.16 52)', '--orange-d':'oklch(0.52 0.185 48)' },
-      amber:  { '--orange':'oklch(0.64 0.17 60)',   '--orange-l':'oklch(0.74 0.15 64)',  '--orange-d':'oklch(0.53 0.17 60)' },
-      coral:  { '--orange':'oklch(0.60 0.18 38)',   '--orange-l':'oklch(0.70 0.16 42)',  '--orange-d':'oklch(0.50 0.18 38)' },
-    };
-
-    /* ── Mini components ── */
-    const Chip = ({ label, variant = 'o' }) => <span className={`chip chip-${variant}`}>{label}</span>;
-
-    const Btn = ({ children, variant='p', full, onClick, disabled, className='' }) => (
-      <button className={`btn btn-${variant}${full?' btn-w':''} ${className}`}
-        onClick={onClick} disabled={disabled}>{children}</button>
-    );
-
-    const Card = ({ children, hi, dark, className='' }) => (
-      <div className={`card${hi?' card-hi':''}${dark?' card-dark':''} ${className}`}>{children}</div>
-    );
-
-    const Progress = ({ value, label, sublabel }) => (
-      <div>
-        <div className="prog-row"><span>{label}</span><span style={{color:'var(--text)'}}>{sublabel}</span></div>
-        <div className="prog-track"><div className="prog-fill" style={{width:`${value}%`}}></div></div>
+// ── Story card component ─────────────────────────────────────────────────
+function StoryCard({feeling,category,profile,persona,height='100%',fontSize=18}){
+  const aff=AFFIRMATIONS[category]||AFFIRMATIONS.general;
+  const p=PERSONAS[persona]||PERSONAS.nature;
+  const fn=firstName(profile?.name);
+  return(
+    <div style={{height,width:'100%',position:'relative',overflow:'hidden',borderRadius:'inherit',backgroundImage:`url(${p.img})`,backgroundSize:'cover',backgroundPosition:'center',backgroundColor:p.bg}}>
+      <div style={{position:'absolute',inset:0,background:'linear-gradient(160deg,rgba(0,0,0,0.28) 0%,rgba(0,0,0,0.08) 40%,rgba(0,0,0,0.72) 100%)'}}/>
+      <div style={{position:'relative',zIndex:1,height:'100%',display:'flex',flexDirection:'column',padding:'20px 22px 26px'}}>
+        <div style={{display:'flex',alignItems:'center',gap:6}}>
+          <span style={{fontSize:13,fontWeight:600,color:'rgba(255,255,255,0.82)',letterSpacing:'0.04em'}}>Promises</span>
+          <span style={{width:4,height:4,borderRadius:2,background:'#D97757',display:'inline-block'}}/>
+        </div>
+        <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',textAlign:'center',gap:14,padding:'16px 4px'}}>
+          <span style={{display:'inline-flex',alignItems:'center',gap:6,padding:'5px 14px',borderRadius:999,background:'rgba(209,102,56,0.82)',color:'#fff',fontSize:13,fontWeight:500}}>
+            <span style={{opacity:0.7}}>✦</span>{feeling}
+          </span>
+          <p style={{fontSize,lineHeight:1.72,fontWeight:300,color:'rgba(255,255,255,0.96)',fontStyle:'italic'}}>{aff.verse}</p>
+          <p style={{fontSize:13,color:'#D97757',fontWeight:500}}>— {aff.ref}</p>
+        </div>
+        <div style={{textAlign:'center'}}>
+          {fn&&<p style={{fontSize:12,color:'rgba(255,255,255,0.5)',marginBottom:6}}>— {fn}</p>}
+          <p style={{fontSize:9,color:'rgba(255,255,255,0.28)',letterSpacing:'0.12em',textTransform:'uppercase'}}>promises.church</p>
+        </div>
       </div>
-    );
+    </div>
+  );
+}
 
-    function MusicBtn({ playing, onToggle }) {
-      return (
-        <button className="music-btn" onClick={onToggle} title={playing ? 'Pause music' : 'Play ambient music'}>
-          {playing ? (
-            <svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
-          ) : (
-            <svg viewBox="0 0 24 24"><path d="M8 5.14v14l11-7-11-7z"/></svg>
-          )}
+// ── Onboarding ────────────────────────────────────────────────────────────
+function Onboarding({onComplete}){
+  const [step,setStep]=useState(0);
+  const [name,setName]=useState('');
+  const [persona,setPersona]=useState('nature');
+  const [denom,setDenom]=useState('');
+  const [cadence,setCadence]=useState('daily');
+  const [notifs,setNotifs]=useState(true);
+
+  function finish(){
+    const p={name:name.trim(),persona,denomination:denom||'Non-denominational',cadence,notifications:notifs,onboardingComplete:true,joinedAt:new Date().toISOString()};
+    saveProfile(p);onComplete(p);
+  }
+
+  return(
+    <div className="ob-overlay">
+      <div className="ob-card">
+        <div className="ob-dots">{[0,1,2,3].map(i=><div key={i} className={`ob-dot${step===i?' active':''}`}></div>)}</div>
+
+        {step===0&&(
+          <div className="a-up">
+            <p className="ob-step-label">Step 1 of 4 — Your Name</p>
+            <h2 className="ob-h">What shall<br/>we call you?</h2>
+            <p className="ob-sub">Used to personalise your prayers and greetings.</p>
+            <input className="inp" placeholder="Your first name" value={name} onChange={e=>setName(e.target.value)} autoFocus style={{marginBottom:20}} onKeyDown={e=>e.key==='Enter'&&name.trim()&&setStep(1)}/>
+            <button className="btn btn-p btn-w" onClick={()=>setStep(1)} disabled={!name.trim()}>Continue →</button>
+          </div>
+        )}
+        {step===1&&(
+          <div className="a-up">
+            <p className="ob-step-label">Step 2 of 4 — Your Persona</p>
+            <h2 className="ob-h">Choose your<br/>sacred space</h2>
+            <p className="ob-sub">This shapes your share card and background.</p>
+            <div className="persona-grid">
+              {Object.entries(PERSONAS).map(([key,p])=>(
+                <div key={key} className={`persona-card${persona===key?' selected':''}`}
+                  style={{backgroundImage:`url(${p.img})`}} onClick={()=>setPersona(key)}>
+                  <div className="persona-overlay"/>
+                  <span className="persona-label">{p.emoji} {p.label}</span>
+                  {persona===key&&<div className="persona-check"><svg width="10" height="10" viewBox="0 0 12 9" fill="none"><path d="M1 4.5l3.5 3.5L11 1" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg></div>}
+                </div>
+              ))}
+            </div>
+            <button className="btn btn-p btn-w" onClick={()=>setStep(2)}>Continue →</button>
+          </div>
+        )}
+        {step===2&&(
+          <div className="a-up">
+            <p className="ob-step-label">Step 3 of 4 — Your Tradition</p>
+            <h2 className="ob-h">Your church<br/>background</h2>
+            <p className="ob-sub">Shapes the tone of your prayers.</p>
+            <div className="ob-options">
+              {DENOMINATIONS.map(d=>(
+                <div key={d} className={`ob-option${denom===d?' selected':''}`} onClick={()=>setDenom(d)}>
+                  <div className="ob-radio"><div className="ob-radio-inner"/></div>
+                  <span className="ob-option-label">{d}</span>
+                </div>
+              ))}
+            </div>
+            <button className="btn btn-p btn-w" onClick={()=>setStep(3)} disabled={!denom}>Continue →</button>
+          </div>
+        )}
+        {step===3&&(
+          <div className="a-up">
+            <p className="ob-step-label">Step 4 of 4 — Your Rhythm</p>
+            <h2 className="ob-h">How often will<br/>you check in?</h2>
+            <p className="ob-sub">We'll track your streak around this.</p>
+            <div className="ob-options" style={{marginBottom:14}}>
+              {CADENCES.map(c=>(
+                <div key={c.v} className={`ob-option${cadence===c.v?' selected':''}`} onClick={()=>setCadence(c.v)}>
+                  <div className="ob-radio"><div className="ob-radio-inner"/></div>
+                  <div><p className="ob-option-label">{c.l}</p><p style={{fontSize:12,color:'var(--t2)',marginTop:2}}>{c.d}</p></div>
+                </div>
+              ))}
+            </div>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 0',borderTop:'1px solid var(--border)',marginBottom:18}}>
+              <div><p style={{fontSize:14,fontWeight:500}}>Daily reminders</p><p style={{fontSize:12,color:'var(--t2)',fontWeight:300}}>A gentle nudge at 8am</p></div>
+              <button className={`toggle ${notifs?'on':'off'}`} onClick={()=>setNotifs(!notifs)}></button>
+            </div>
+            <button className="btn btn-p btn-w" onClick={finish}>Begin My Journey →</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Recent Entries carousel ───────────────────────────────────────────────
+function RecentEntries({history}){
+  const entries=history.slice(0,4);
+  const [idx,setIdx]=useState(0);
+  const scrollRef=useRef(null);
+  const isDragging=useRef(false);
+  const dragStart=useRef(0);
+  const scrollStart=useRef(0);
+
+  function onScroll(e){
+    const el=e.currentTarget;
+    const newIdx=Math.round(el.scrollLeft/el.offsetWidth);
+    if(newIdx!==idx) setIdx(newIdx);
+  }
+  function goTo(i){
+    if(!scrollRef.current)return;
+    scrollRef.current.scrollTo({left:i*scrollRef.current.offsetWidth,behavior:'smooth'});
+    setIdx(i);
+  }
+  function onMouseDown(e){isDragging.current=true;dragStart.current=e.clientX;scrollStart.current=scrollRef.current.scrollLeft;}
+  function onMouseMove(e){if(!isDragging.current)return;scrollRef.current.scrollLeft=scrollStart.current-(e.clientX-dragStart.current);}
+  function onMouseUp(){isDragging.current=false;}
+
+  const catColor={fear:'var(--orange)',grief:'var(--teal)',hope:'var(--green)',peace:'var(--green)',financial:'oklch(0.48 0.118 79)',identity:'var(--orange)',purpose:'var(--teal)',general:'var(--orange)'};
+
+  return(
+    <div className="a-up d4">
+      <div ref={scrollRef} onScroll={onScroll}
+        onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseUp}
+        style={{display:'flex',overflowX:'auto',overflowY:'hidden',scrollSnapType:'x mandatory',WebkitOverflowScrolling:'touch',gap:10,cursor:'grab',userSelect:'none',paddingBottom:2}}>
+        {entries.map((h,i)=>(
+          <div key={i} style={{minWidth:'100%',scrollSnapAlign:'start',background:'var(--bg-card)',border:'1px solid var(--border)',borderLeft:`3px solid ${catColor[h.category]||'var(--orange)'}`,borderRadius:18,padding:'16px 18px',boxShadow:'0 2px 14px oklch(0.155 0.035 275 / 0.06)'}}>
+            <p style={{fontSize:11,color:'var(--t3)',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:7}}>
+              {i===0?'Last entry':'Entry'} · {formatDate(h.date)}
+            </p>
+            <p style={{fontSize:14,marginBottom:4}}>You felt <span style={{color:catColor[h.category]||'var(--orange)',fontWeight:500}}>"{h.feeling}"</span></p>
+            {h.categoryLabel&&<p style={{fontSize:11,color:'var(--t3)',marginBottom:4}}>{h.categoryLabel}</p>}
+            <p style={{fontSize:12,color:'var(--t2)',fontWeight:300}}>{h.ref}</p>
+          </div>
+        ))}
+      </div>
+      {entries.length>1&&(
+        <div style={{display:'flex',gap:5,justifyContent:'center',marginTop:9}}>
+          {entries.map((_,i)=>(
+            <div key={i} onClick={()=>goTo(i)} style={{height:5,borderRadius:3,background:i===idx?'var(--orange)':'var(--border-hi)',width:i===idx?18:5,transition:'all 0.3s cubic-bezier(0.34,1.3,0.64,1)',cursor:'pointer'}}/>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── CheckIn ───────────────────────────────────────────────────────────────
+function CheckIn({onNext,profile,history,dir}){
+  const [val,setVal]=useState('');
+  const clean=val.trim().replace(/\s+/g,'');
+  const streak=loadStreak();
+  const alreadyToday=history.length&&new Date(history[0].date).toDateString()===new Date().toDateString();
+  const mil=getMilestone(streak.current);
+  return(
+    <div className={`screen enter-${dir}`} data-screen-label="01 Check-In">
+      <p className="a-fade" style={{fontSize:13,color:'var(--t2)',fontWeight:300,paddingLeft:2}}>{getGreeting(profile,history)}</p>
+      <div className="card card-hi a-up d1">
+        <p style={{fontSize:11,color:'var(--t3)',textTransform:'uppercase',letterSpacing:'0.1em',fontWeight:600,marginBottom:10}}>Today's check-in</p>
+        <p style={{fontSize:26,lineHeight:1.28,fontWeight:300,marginBottom:8,letterSpacing:'-0.025em'}}>How are you<br/>feeling right now?</p>
+        <p style={{fontSize:13,color:'var(--t2)',lineHeight:1.55,marginBottom:18,fontWeight:300}}>One word. Be honest. Let it go.</p>
+        <input className="inp" placeholder="e.g. anxious, grateful, lost…" maxLength={30} value={val} onChange={e=>setVal(e.target.value.replace(/\s/g,''))} onKeyDown={e=>e.key==='Enter'&&clean&&!alreadyToday&&onNext(clean)} autoFocus/>
+      </div>
+      <div className="a-up d2">
+        <button className="btn btn-p btn-w" style={{marginBottom:9}} onClick={()=>onNext(clean)} disabled={!clean||alreadyToday}>
+          {alreadyToday?'Already checked in today ✦':'Exchange It →'}
         </button>
-      );
-    }
-
-    function WaveViz() {
-      return (
-        <div className="wave-wrap">
-          {[0.4,0.7,1,0.8,0.5,0.9,0.6,0.75,0.45,0.85].map((h, i) => (
-            <div key={i} className="wave-bar"
-              style={{ height: `${h*20}px`, animationDelay: `${i*0.13}s`, animationDuration: `${1.2+i*0.08}s` }} />
-          ))}
-        </div>
-      );
-    }
-
-    /* ── Screen 1: Check-In ── */
-    function CheckIn({ onNext }) {
-      const [val, setVal] = useState('');
-      const clean = val.trim().replace(/\s+/g, '');
-      return (
-        <div className="content">
-          <div style={{height:6}}></div>
-          <Card hi className="a-up">
-            <p style={{fontSize:11,color:'var(--t2)',textTransform:'uppercase',letterSpacing:'0.1em',fontWeight:600,marginBottom:10}}>Today's check-in</p>
-            <p style={{fontSize:24,lineHeight:1.3,fontWeight:300,marginBottom:6,color:'var(--text)',letterSpacing:'-0.02em'}}>
-              How are you feeling<br/>right now?
-            </p>
-            <p style={{fontSize:13,color:'var(--t2)',lineHeight:1.55,marginBottom:20,fontWeight:300}}>One word. Be honest. Let it go.</p>
-            <input className="inp" placeholder="e.g. anxious, joyful, lost…" maxLength={30}
-              value={val} onChange={e => setVal(e.target.value.replace(/\s/g,''))}
-              onKeyDown={e => e.key==='Enter' && clean && onNext(clean)} autoFocus />
-          </Card>
-
-          <div className="a-up d2" style={{display:'flex',flexDirection:'column',gap:9}}>
-            <Btn full onClick={() => onNext(clean)} disabled={!clean}>Exchange It →</Btn>
-            <p style={{textAlign:'center',fontSize:12,color:'var(--t3)',fontWeight:300}}>Your word is received. Something sacred returns.</p>
+        <p style={{textAlign:'center',fontSize:12,color:'var(--t3)',fontWeight:300}}>Your word is received. Something sacred returns.</p>
+      </div>
+      <div className="card a-up d3">
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <div style={{width:40,height:40,borderRadius:'50%',background:'var(--yellow-s)',border:'1px solid oklch(0.832 0.118 84/0.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:17,flexShrink:0}}>🔥</div>
+          <div style={{flex:1}}>
+            <p style={{fontSize:13,fontWeight:500,marginBottom:2}}>Daily Rhythm</p>
+            <p style={{fontSize:12,color:'var(--t2)',fontWeight:300}}>{streak.current>0?`${streak.current}-day streak — keep going`:'Start your streak today'}</p>
           </div>
+          {mil&&<span className="milestone">{mil.icon} {mil.label}</span>}
+        </div>
+        {streak.current>0&&<div style={{marginTop:14}}><div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'var(--t3)',marginBottom:6}}><span>This week</span><span style={{color:'var(--text)',fontWeight:500}}>{Math.min(streak.current,7)}/7</span></div><div className="prog-track"><div className="prog-fill" style={{width:`${Math.min(streak.current/7*100,100)}%`}}></div></div></div>}
+      </div>
+      {history.length>0&&<RecentEntries history={history}/>}
+    </div>
+  );
+}
 
-          <Card className="a-up d3">
-            <div style={{display:'flex',alignItems:'center',gap:12}}>
-              <div style={{width:40,height:40,borderRadius:'50%',background:'var(--orange-s)',border:'1px solid oklch(0.625 0.185 48 / 0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>✦</div>
+// ── Affirmation ───────────────────────────────────────────────────────────
+function Affirmation({feeling,category,onPrayer,onMusic,streak,dir}){
+  const aff=AFFIRMATIONS[category]||AFFIRMATIONS.general,cat=CATEGORIES[category],mil=getMilestone(streak.current);
+  return(
+    <div className={`screen enter-${dir}`} data-screen-label="02 Promise">
+      <div className="a-fade" style={{display:'flex',alignItems:'center',gap:7,flexWrap:'wrap',paddingLeft:2}}>
+        <span style={{fontSize:13,color:'var(--t2)',fontWeight:300}}>You felt</span>
+        <span className="feeling-badge"><span style={{opacity:0.6}}>✦</span>{feeling}</span>
+        {cat&&<span className={`chip ${cat.color}`}>We heard: {cat.label}</span>}
+      </div>
+      <div className="card card-hi a-up d1">
+        <span className="chip chip-y" style={{marginBottom:16,display:'inline-flex'}}>Your Promise</span>
+        <p className="scripture">{aff.verse}</p>
+        <p className="scrip-ref">— {aff.ref}</p>
+      </div>
+      {streak.current===1?(
+        <div className="card card-orange a-pop"><span className="cel-icon">🌱</span><p style={{fontWeight:600,fontSize:16,marginBottom:4}}>First Promise received.</p><p style={{fontSize:13,color:'var(--t2)',fontWeight:300}}>Day one of something beautiful.</p></div>
+      ):mil&&streak.current===mil.days?(
+        <div className="card card-orange a-pop"><span className="cel-icon">{mil.icon}</span><p style={{fontWeight:600,fontSize:16,marginBottom:4}}>{mil.label} reached.</p><p style={{fontSize:13,color:'var(--t2)',fontWeight:300}}>Consistency is its own act of faith.</p></div>
+      ):(
+        <div className="card a-up d2" style={{padding:'14px 18px'}}>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'var(--t3)',marginBottom:7}}><span>Streak</span><span style={{color:'var(--text)',fontWeight:500}}>{streak.current} days</span></div>
+          <div className="prog-track"><div className="prog-fill" style={{width:`${Math.min(streak.current/7*100,100)}%`}}></div></div>
+        </div>
+      )}
+      <div className="btn-row a-up d3">
+        <button className="btn btn-p" style={{flex:1}} onClick={onPrayer}>Pray This →</button>
+        <button className="btn btn-ghost" style={{flex:1}} onClick={onMusic}>Skip to Music</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Prayer ────────────────────────────────────────────────────────────────
+function Prayer({category,profile,onNext,dir,tweaks}){
+  const [copied,setCopied]=useState(false);
+  const fn=firstName(profile?.name)||'';
+  const lines=(PRAYERS[category]||PRAYERS.general)(fn);
+  const useItalic=tweaks?.prayerItalic!==false;
+  function copyPrayer(){const text=lines.join('\n\n');if(navigator.clipboard){navigator.clipboard.writeText(text).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2200);});}else{setCopied(true);setTimeout(()=>setCopied(false),2200);}}
+  return(
+    <div className={`screen enter-${dir}`} data-screen-label="03 Prayer">
+      <div className="card card-hi">
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:22}}>
+          <span className="chip chip-o">A Prayer For {fn||'You'}</span>
+          {profile?.denomination&&<span style={{fontSize:11,color:'var(--t3)',fontWeight:300}}>{profile.denomination}</span>}
+        </div>
+        {lines.map((line,i)=>(
+          <p key={i} className="prayer-line a-up" style={{animationDelay:`${i*0.07}s`,marginBottom:i===lines.length-1?0:i===0?18:13,fontWeight:i===0||i===lines.length-1?500:300,color:i===0||i===lines.length-1?'var(--text)':'var(--t2)',fontStyle:useItalic&&i>0&&i<lines.length-1?'italic':'normal'}}>{line}</p>
+        ))}
+      </div>
+      <div className="btn-row a-up d5">
+        <div className="tip-w" style={{flex:1}}>
+          <button className="btn btn-ghost btn-w" onClick={copyPrayer}>{copied?'Copied ✓':'Copy Prayer'}</button>
+          {copied&&<span className="tip">Copied ✓</span>}
+        </div>
+        <button className="btn btn-p" style={{flex:1}} onClick={onNext}>Music →</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Music ─────────────────────────────────────────────────────────────────
+function Music({category,profile,onNext,musicPlaying,dir,tweaks}){
+  const m=MUSIC_MAP[category]||MUSIC_MAP.general,s=SERMONS[category]||SERMONS.general;
+  const showSermon=tweaks?.showSermon!==false;
+  const q=encodeURIComponent(`${m.song} ${m.artist}`);
+  return(
+    <div className={`screen enter-${dir}`} data-screen-label="04 Music">
+      <div className="card card-hi a-up d1">
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
+          <span className="chip chip-y">Worship For Now</span>
+          {musicPlaying&&<div className="wave-wrap">{[0.4,0.7,1,0.8,0.55,0.9,0.6].map((h,i)=><div key={i} className="wave-bar" style={{height:`${h*16}px`,animationDelay:`${i*0.12}s`}}/>)}</div>}
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:14}}>
+          <div className="song-art">♪</div>
+          <div><p style={{fontWeight:500,fontSize:17,letterSpacing:'-0.01em'}}>{m.song}</p><p style={{fontSize:13,color:'var(--t2)',marginTop:3,fontWeight:300}}>{m.artist}</p></div>
+        </div>
+        <p style={{fontSize:13,color:'var(--t2)',marginBottom:16,lineHeight:1.65,fontWeight:300}}>{m.theme}</p>
+        <a href={`https://open.spotify.com/search/${q}`} target="_blank" rel="noopener noreferrer" className="btn btn-spotify btn-w" style={{textDecoration:'none'}}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+          Open in Spotify
+        </a>
+      </div>
+      {showSermon&&<div className="card a-up d2">
+        <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:12}}>
+          <span className="chip chip-t">From Your Church</span>
+          <span style={{fontSize:11,color:'var(--t3)',fontWeight:300}}>{s.series}</span>
+        </div>
+        <p style={{fontSize:14,fontWeight:500,marginBottom:3}}>{s.title}</p>
+        <p style={{fontSize:11,color:'var(--t3)',fontWeight:300,marginBottom:13}}>{s.speaker}</p>
+        <p style={{fontSize:13,lineHeight:1.72,fontWeight:300,color:'var(--t2)',fontStyle:'italic'}}>{s.excerpt}</p>
+      </div>}
+      <button className="btn btn-p btn-w a-up d3" onClick={onNext}>Create Share Card →</button>
+    </div>
+  );
+}
+
+// ── Share ─────────────────────────────────────────────────────────────────
+function Share({feeling,category,profile,onRestart,dir}){
+  const [storyPreview,setStoryPreview]=useState(false);
+  const [storyProgress,setStoryProgress]=useState(0);
+  const [igCopied,setIgCopied]=useState(false);
+  const storyTimer=useRef(null);
+
+  useEffect(()=>{
+    if(storyPreview){
+      setStoryProgress(0);
+      const start=Date.now();const dur=7000;
+      storyTimer.current=setInterval(()=>{
+        const p=Math.min(100,(Date.now()-start)/dur*100);
+        setStoryProgress(p);
+        if(p>=100){clearInterval(storyTimer.current);setStoryPreview(false);}
+      },50);
+    }else{clearInterval(storyTimer.current);setStoryProgress(0);}
+    return()=>clearInterval(storyTimer.current);
+  },[storyPreview]);
+  const aff=AFFIRMATIONS[category]||AFFIRMATIONS.general;
+  const personaKey=profile?.persona||'nature';
+  const fn=firstName(profile?.name);
+  const waText=`"${aff.verse.replace(/[""]/g,'')}" — ${aff.ref}\n\nMy word today was "${feeling}". God answered.\n\nShared via Promises`;
+
+  function copyIG(){
+    const text=`${aff.verse.replace(/[""]/g,'')}\n— ${aff.ref}\n\n#Promises #Faith`;
+    navigator.clipboard?.writeText(text).then(()=>{setIgCopied(true);setTimeout(()=>setIgCopied(false),2200);}).catch(()=>{setIgCopied(true);setTimeout(()=>setIgCopied(false),2200);});
+  }
+
+  return(
+    <div className={`screen enter-${dir}`} data-screen-label="05 Share">
+      {/* Story card preview */}
+      <div className="a-pop" style={{borderRadius:20,overflow:'hidden',height:480}}>
+        <StoryCard feeling={feeling} category={category} profile={profile} persona={personaKey} height="100%"/>
+      </div>
+
+      {/* Actions */}
+      <div className="a-up d2">
+        <div className="btn-row" style={{marginBottom:9}}>
+          <button className="btn btn-ghost" style={{flex:1}} onClick={()=>setStoryPreview(true)}>Preview Story</button>
+          <button className="btn btn-ghost" style={{flex:1}} onClick={()=>downloadStory(personaKey,aff.verse,aff.ref,feeling,fn)}>Download PNG</button>
+        </div>
+        <div className="btn-row" style={{marginBottom:9}}>
+          <a href={`https://wa.me/?text=${encodeURIComponent(waText)}`} target="_blank" rel="noopener noreferrer" className="btn btn-ghost" style={{flex:1,textDecoration:'none',justifyContent:'center'}}>WhatsApp</a>
+          <div className="tip-w" style={{flex:1}}>
+            <button className="btn btn-ghost btn-w" onClick={copyIG}>{igCopied?'Copied ✓':'Copy for IG'}</button>
+            {igCopied&&<span className="tip">Copied ✓</span>}
+          </div>
+        </div>
+        <button className="btn btn-p btn-w" onClick={onRestart}>↺ New Check-In</button>
+      </div>
+
+      {/* IG Story preview simulation */}
+      {storyPreview&&(
+        <div className="story-overlay">
+          <div className="story-bars">
+            {[1,2,3].map((n,i)=><div key={i} className="story-bar"><div className="story-bar-fill" style={{width:i===0?`${storyProgress}%`:0}}/></div>)}
+          </div>
+          <div className="story-header">
+            <div className="story-avatar"/>
+            <div>
+              <p style={{fontSize:13,fontWeight:600,color:'#fff',lineHeight:1.2}}>promises.church</p>
+              <p style={{fontSize:11,color:'rgba(255,255,255,0.6)'}}>Just now</p>
+            </div>
+            <button className="story-close" onClick={()=>setStoryPreview(false)}>✕</button>
+          </div>
+          <StoryCard feeling={feeling} category={category} profile={profile} persona={personaKey} height="100%" fontSize={20}/>
+          <div className="story-reply">
+            <div className="story-reply-box">Send message…</div>
+            <span style={{fontSize:22,color:'rgba(255,255,255,0.7)',cursor:'pointer'}}>♡</span>
+            <span style={{fontSize:20,color:'rgba(255,255,255,0.7)',cursor:'pointer'}}>↗</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── History ───────────────────────────────────────────────────────────────
+function History({history,dir}){
+  const catColor={fear:'chip-o',grief:'chip-t',hope:'chip-g',peace:'chip-g',financial:'chip-y',identity:'chip-o',purpose:'chip-t',general:'chip-t'};
+  return(
+    <div className={`screen enter-${dir}`} data-screen-label="History">
+      <div className="a-up" style={{paddingLeft:2}}>
+        <p style={{fontSize:24,fontWeight:300,letterSpacing:'-0.025em',marginBottom:3}}>Your History</p>
+        <p style={{fontSize:13,color:'var(--t2)',fontWeight:300}}>{history.length} check-in{history.length!==1?'s':''} recorded</p>
+      </div>
+      {!history.length?(
+        <div className="card a-up d1" style={{textAlign:'center',padding:'44px 20px'}}>
+          <div style={{fontSize:32,marginBottom:14,opacity:0.3}}>✦</div>
+          <p style={{fontSize:16,fontWeight:300,color:'var(--t2)'}}>No check-ins yet.</p>
+          <p style={{fontSize:13,color:'var(--t3)',fontWeight:300,marginTop:6}}>Your journey starts with one word.</p>
+        </div>
+      ):(
+        <div className="card a-up d1">
+          {history.slice(0,10).map((h,i)=>(
+            <div key={i} className="hist-entry">
+              <div className="hist-dot"/>
               <div style={{flex:1}}>
-                <p style={{fontSize:13,fontWeight:500,marginBottom:2}}>Daily Rhythm</p>
-                <p style={{fontSize:12,color:'var(--t2)',fontWeight:300}}>Check in each day to build your streak</p>
+                <p style={{fontSize:15,fontWeight:500}}>"{h.feeling}"</p>
+                {h.categoryLabel&&<span className={`chip ${catColor[h.category]||'chip-t'}`} style={{marginTop:5,marginBottom:5,display:'inline-flex'}}>{h.categoryLabel}</span>}
+                <p style={{fontSize:12,color:'var(--orange)',fontWeight:500,marginTop:h.categoryLabel?0:4}}>{h.ref}</p>
               </div>
-              <Chip label="4 days" variant="y"/>
+              <span style={{fontSize:11,color:'var(--t3)',paddingTop:2,flexShrink:0,marginLeft:'auto'}}>{formatDate(h.date)}</span>
             </div>
-          </Card>
-        </div>
-      );
-    }
-
-    /* ── Screen 2: Affirmation ── */
-    function Affirmation({ feeling, onPrayer, onMusic, showStreak }) {
-      return (
-        <div className="content">
-          <div className="a-fade" style={{display:'flex',alignItems:'center',gap:7,flexWrap:'wrap'}}>
-            <span style={{fontSize:13,color:'var(--t2)',fontWeight:300}}>You felt</span>
-            <span className="feeling-badge"><span style={{fontSize:15}}>✦</span> {feeling}</span>
-            <span style={{fontSize:13,color:'var(--t2)',fontWeight:300}}>— here's what was waiting.</span>
-          </div>
-
-          <Card hi className="a-up d1">
-            <div style={{marginBottom:14}}><Chip label="Your Affirmation" variant="y"/></div>
-            <p className="scripture">
-              "Fear not, for I am with you; be not dismayed, for I am your God. I will strengthen you, yes, I will help you, I will uphold you with My righteous right hand."
-            </p>
-            <p className="scrip-ref">— Isaiah 41:10</p>
-          </Card>
-
-          {showStreak && (
-            <Card className="a-up d2"><Progress value={57} label="Daily streak" sublabel="4 of 7 days"/></Card>
-          )}
-
-          <Card className="a-up d3">
-            <p style={{fontSize:13,color:'var(--t2)',lineHeight:1.65,marginBottom:10,fontWeight:300}}>
-              This word was spoken over humanity's deepest fear — you are not alone in feeling this.
-            </p>
-            <div style={{height:1,background:'var(--border)',margin:'10px 0'}}></div>
-            <Chip label="Isaiah 41 • Old Testament" variant="o"/>
-          </Card>
-
-          <div className="btn-row a-up d4">
-            <Btn variant="p" onClick={onPrayer}>See Your Prayer</Btn>
-            <Btn variant="ghost" onClick={onMusic}>Skip to Music</Btn>
-          </div>
-        </div>
-      );
-    }
-
-    /* ── Screen 3: Prayer ── */
-    function Prayer({ onNext }) {
-      const [copied, setCopied] = useState(false);
-      const lines = [
-        { t:"Heavenly Father,", hi:true },
-        { t:"In this moment of uncertainty and fear, I come before You — not with answers, but with my whole, weary self.", hi:false },
-        { t:"You promised never to forsake me. I receive that promise now. Let Your peace, which surpasses understanding, guard my heart and my mind.", hi:false },
-        { t:"Where anxiety has spoken, may Your Word speak louder. Where I feel small, remind me whose hands formed me.", hi:false },
-        { t:"I release what I cannot carry. I trust what I cannot see.", hi:false },
-        { t:"Amen.", hi:true },
-      ];
-      return (
-        <div className="content">
-          <Card hi>
-            <div style={{marginBottom:16}}><Chip label="Prayer For You" variant="o"/></div>
-            {lines.map((l, i) => (
-              <p key={i} className={`prayer-p a-up d${Math.min(i+1,5)}`}
-                style={{marginBottom:l.hi?10:15,fontWeight:l.hi?500:300,color:l.hi?'var(--text)':'var(--t2)'}}>
-                {l.t}
-              </p>
-            ))}
-          </Card>
-          <div className="btn-row a-up d5">
-            <div className="tip-w" style={{flex:1}}>
-              <Btn variant="ghost" full onClick={() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }}>Copy Prayer</Btn>
-              {copied && <span className="tip">Copied ✓</span>}
-            </div>
-            <Btn variant="p" onClick={onNext}>Next → Music</Btn>
-          </div>
-        </div>
-      );
-    }
-
-    /* ── Screen 4: Music ── */
-    function Music({ onNext, musicPlaying }) {
-      return (
-        <div className="content">
-          <Card hi className="a-up d1">
-            <div style={{marginBottom:14}}><Chip label="Worship For This Moment" variant="y"/></div>
-            <div style={{display:'flex',alignItems:'center',gap:13,marginBottom:16}}>
-              <div className="song-art">♪</div>
-              <div>
-                <p style={{fontWeight:500,fontSize:16}}>Waymaker</p>
-                <p style={{fontSize:13,color:'var(--t2)',marginTop:3,fontWeight:300}}>Sinach • Praise &amp; Worship</p>
-              </div>
-              {musicPlaying && <div style={{marginLeft:'auto'}}><WaveViz/></div>}
-            </div>
-            <p style={{fontSize:13,color:'var(--t2)',marginBottom:14,lineHeight:1.65,fontWeight:300}}>
-              Chosen for a heart carrying fear — this song speaks to the God who moves when the way seems closed.
-            </p>
-            <Btn variant="spotify" full>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
-              Open in Spotify
-            </Btn>
-          </Card>
-
-          <Card className="a-up d2">
-            <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:10}}>
-              <Chip label="From Your Church" variant="t"/>
-              <Chip label="Pastor's Note" variant="o"/>
-            </div>
-            <p style={{fontSize:16,lineHeight:1.7,fontWeight:300,color:'var(--text)',marginBottom:8}}>
-              "You are not defined by what you carry. You are defined by the One who carried it all."
-            </p>
-            <p style={{fontSize:12,color:'var(--t2)',fontWeight:300}}>Sunday Series: <em>Unshakeable</em></p>
-          </Card>
-
-          <Btn variant="p" full className="a-up d3" onClick={onNext}>Create Share Card →</Btn>
-        </div>
-      );
-    }
-
-    /* ── Screen 5: Share ── */
-    function Share({ feeling, onRestart }) {
-      return (
-        <div className="content">
-          <div className="share-bg a-pop">
-            <div style={{fontSize:26,marginBottom:14,opacity:0.5}}>✦</div>
-            <p style={{fontSize:19,lineHeight:1.65,fontWeight:300,color:'oklch(0.92 0.025 65)',marginBottom:4,position:'relative',zIndex:1}}>
-              "Fear not, for I am with you; be not dismayed, for I am your God."
-            </p>
-            <p style={{fontSize:13,color:'var(--orange-l)',fontWeight:500,marginBottom:18,position:'relative',zIndex:1}}>— Isaiah 41:10</p>
-            <div style={{height:1,background:'rgba(255,255,255,0.1)',marginBottom:14}}></div>
-            <p style={{fontSize:11,color:'oklch(0.6 0.03 275)',textTransform:'uppercase',letterSpacing:'0.1em',fontWeight:600}}>
-              My word was <span style={{color:'var(--orange-l)'}}>{feeling}</span>. God answered.
-            </p>
-            <p style={{fontSize:11,color:'oklch(0.55 0.03 275)',letterSpacing:'0.1em',textTransform:'uppercase',fontWeight:600,marginTop:16}}>
-              Promises <span className="share-pill">App</span>
-            </p>
-          </div>
-          <div className="a-up d2">
-            <div className="btn-row" style={{marginBottom:9}}>
-              <Btn variant="ghost">Download</Btn>
-              <Btn variant="ghost">WhatsApp</Btn>
-              <Btn variant="ghost">Instagram</Btn>
-            </div>
-            <Btn variant="p" full onClick={onRestart}>↺ Start Over</Btn>
-          </div>
-        </div>
-      );
-    }
-
-    /* ── Steps indicator ── */
-    function Steps({ current }) {
-      return (
-        <div className="steps">
-          {[0,1,2,3,4].map(i => (
-            <div key={i} className={`sdot ${i<current?'done':i===current?'active':'idle'}`}></div>
           ))}
         </div>
-      );
-    }
-
-    /* ── Main App ── */
-    function App() {
-      const [screen, setScreen]       = useState(0);
-      const [feeling, setFeeling]     = useState('');
-      const [tweaks, setTweaks]       = useState(TWEAK_DEFAULTS);
-      const [showTweaks, setShowTweaks] = useState(false);
-      const [musicPlaying, setMusicPlaying] = useState(false);
-
-      useEffect(() => {
-        const root = document.documentElement;
-        const acc = ACCENTS[tweaks.accentColor] || ACCENTS.orange;
-        Object.entries(acc).forEach(([k,v]) => root.style.setProperty(k,v));
-        root.style.setProperty('--dur', tweaks.animSpeed==='slow'?'0.65s':tweaks.animSpeed==='fast'?'0.18s':'0.38s');
-      }, [tweaks]);
-
-      useEffect(() => {
-        const h = e => {
-          if (e.data?.type==='__activate_edit_mode')   setShowTweaks(true);
-          if (e.data?.type==='__deactivate_edit_mode') setShowTweaks(false);
-        };
-        window.addEventListener('message', h);
-        window.parent.postMessage({type:'__edit_mode_available'}, '*');
-        return () => window.removeEventListener('message', h);
-      }, []);
-
-      const toggleMusic = () => {
-        if (musicPlaying) { window.AmbientAudio.stop(); setMusicPlaying(false); }
-        else              { window.AmbientAudio.start(); setMusicPlaying(true); }
-      };
-
-      const go = n => setScreen(n);
-
-      const screens = [
-        <CheckIn       key={`s0-${screen}`} onNext={f => { setFeeling(f); go(1); }} />,
-        <Affirmation   key={`s1-${screen}`} feeling={feeling} onPrayer={() => go(2)} onMusic={() => go(3)} showStreak={tweaks.showStreak} />,
-        <Prayer        key={`s2-${screen}`} onNext={() => go(3)} />,
-        <Music         key={`s3-${screen}`} onNext={() => go(4)} musicPlaying={musicPlaying} />,
-        <Share         key={`s4-${screen}`} feeling={feeling} onRestart={() => { setFeeling(''); go(0); }} />,
-      ];
-
-      return (
-        <div className="app-wrap">
-          <div className="shell">
-            <nav className="nav">
-              <a href="Landing.html" className="nav-brand">Promises</a>
-              <div className="nav-right">
-                <MusicBtn playing={musicPlaying} onToggle={toggleMusic}/>
-                <Chip label={['Check-In','Affirmation','Prayer','Music','Share'][screen]} variant="o"/>
-                <div className="avatar">JD</div>
-              </div>
-            </nav>
-            <Steps current={screen}/>
-            {screens[screen]}
-          </div>
-
-          {showTweaks && (
-            <div className="tweaks-overlay">
-              <TweaksPanel onClose={() => { setShowTweaks(false); window.parent.postMessage({type:'__edit_mode_dismissed'},'*'); }}>
-                <TweakSection title="Accent">
-                  <TweakRadio id="accentColor" options={['orange','amber','coral']} value={tweaks.accentColor} onChange={v => { setTweaks(p => ({...p,accentColor:v})); window.parent.postMessage({type:'__edit_mode_set_keys',edits:{accentColor:v}},'*'); }}/>
-                </TweakSection>
-                <TweakSection title="Animation Speed">
-                  <TweakRadio id="animSpeed" options={['fast','normal','slow']} value={tweaks.animSpeed} onChange={v => { setTweaks(p => ({...p,animSpeed:v})); window.parent.postMessage({type:'__edit_mode_set_keys',edits:{animSpeed:v}},'*'); }}/>
-                </TweakSection>
-                <TweakSection title="Widgets">
-                  <TweakToggle id="showStreak" label="Show daily streak" value={tweaks.showStreak} onChange={v => { setTweaks(p => ({...p,showStreak:v})); window.parent.postMessage({type:'__edit_mode_set_keys',edits:{showStreak:v}},'*'); }}/>
-                </TweakSection>
-              </TweaksPanel>
-            </div>
-          )}
+      )}
+      {history.length>2&&(
+        <div className="card a-up d2">
+          <p style={{fontSize:11,color:'var(--t3)',textTransform:'uppercase',letterSpacing:'0.08em',fontWeight:600,marginBottom:14}}>Most Felt</p>
+          {(()=>{const counts={};history.forEach(h=>{const c=h.category||'general';counts[c]=(counts[c]||0)+1;});return Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([cat,count])=>(<div key={cat} style={{display:'flex',alignItems:'center',gap:10,marginBottom:9}}><span className={`chip ${catColor[cat]||'chip-t'}`} style={{minWidth:110}}>{CATEGORIES[cat]?.label||'General'}</span><div style={{flex:1,height:3,borderRadius:2,background:'var(--border)',overflow:'hidden'}}><div style={{height:'100%',borderRadius:2,background:'var(--orange)',width:`${count/history.length*100}%`}}></div></div><span style={{fontSize:12,color:'var(--t2)',fontWeight:500,minWidth:20,textAlign:'right'}}>{count}×</span></div>));})()}
         </div>
-      );
-    }
+      )}
+    </div>
+  );
+}
 
-    ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
-  </script>
+// ── Settings ──────────────────────────────────────────────────────────────
+function Settings({profile,onUpdateProfile,onClearHistory,dir}){
+  const [name,setName]=useState(profile?.name||'');
+  const [denom,setDenom]=useState(profile?.denomination||'Non-denominational');
+  const [cadence,setCadence]=useState(profile?.cadence||'daily');
+  const [notifs,setNotifs]=useState(profile?.notifications!==false);
+  const [notifStatus,setNotifStatus]=useState(()=>typeof Notification!=='undefined'?Notification.permission:'default');
+  const [saved,setSaved]=useState(false);
+  const [confirmClear,setConfirmClear]=useState(false);
+  const streak=loadStreak();
+
+  async function toggleNotifs(){
+    if(!notifs){
+      if(typeof Notification==='undefined'){setNotifs(true);return;}
+      if(notifStatus==='default'){
+        const perm=await Notification.requestPermission();
+        setNotifStatus(perm);
+        if(perm==='granted'){
+          setNotifs(true);
+          new Notification('Promises',{body:'Daily reminders are on. See you at 8am ✦',icon:'icon-192.png'});
+        }
+      } else if(notifStatus==='granted'){setNotifs(true);}
+    } else {setNotifs(false);}
+  }
+
+  function save(){const u={...profile,name:name.trim(),denomination:denom,cadence,notifications:notifs};saveProfile(u);onUpdateProfile(u);setSaved(true);setTimeout(()=>setSaved(false),2000);}
+  function logout(){if(confirm('Sign out of Promises?')){localStorage.removeItem('promises_profile');window.location.href='Auth.html';}}
+
+  return(
+    <div className={`screen enter-${dir}`} data-screen-label="Settings">
+      <div className="a-up" style={{paddingLeft:2}}>
+        <p style={{fontSize:24,fontWeight:300,letterSpacing:'-0.025em',marginBottom:3}}>Settings</p>
+        <p style={{fontSize:13,color:'var(--t2)',fontWeight:300}}>Your Promises profile</p>
+      </div>
+      <div className="card a-up d1">
+        <p style={{fontSize:11,fontWeight:600,color:'var(--t3)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:16}}>Profile</p>
+        <div style={{display:'flex',flexDirection:'column',gap:12}}>
+          <div><p style={{fontSize:12,color:'var(--t2)',marginBottom:6}}>Your name</p><input className="inp inp-sm" value={name} onChange={e=>setName(e.target.value)} style={{width:'100%'}}/></div>
+          <div><p style={{fontSize:12,color:'var(--t2)',marginBottom:6}}>Church tradition</p><select className="sel" value={denom} onChange={e=>setDenom(e.target.value)}>{DENOMINATIONS.map(d=><option key={d}>{d}</option>)}</select></div>
+          <div><p style={{fontSize:12,color:'var(--t2)',marginBottom:6}}>Check-in cadence</p><select className="sel" value={cadence} onChange={e=>setCadence(e.target.value)}>{CADENCES.map(c=><option key={c.v} value={c.v}>{c.l} — {c.d}</option>)}</select></div>
+        </div>
+      </div>
+      <div className="card a-up d2">
+        <p style={{fontSize:11,fontWeight:600,color:'var(--t3)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:14}}>Preferences</p>
+        <div className="set-row"><div><p className="set-label">Daily reminders</p><p className="set-sub">{notifStatus==='denied'?'Blocked in browser settings':notifStatus==='granted'&&notifs?'Active — 8am nudge enabled':'Tap to enable push notifications'}</p></div><button className={`toggle ${notifs&&notifStatus==='granted'?'on':'off'}`} onClick={toggleNotifs}></button></div>
+        <div className="set-row" style={{borderBottom:'none'}}><div><p className="set-label">Joined</p><p className="set-sub">{profile?.joinedAt?formatDate(profile.joinedAt):'Recently'}</p></div><span className="chip chip-g">Active</span></div>
+      </div>
+      <div className="card a-up d3">
+        <p style={{fontSize:11,fontWeight:600,color:'var(--t3)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:12}}>Your Stats</p>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          <div className="stat-box"><p className="stat-lbl">Current streak</p><p className="stat-val">{streak.current}d</p></div>
+          <div className="stat-box"><p className="stat-lbl">Longest streak</p><p className="stat-val">{streak.longest}d</p></div>
+        </div>
+      </div>
+      <div className="tip-w a-up d4">
+        <button className="btn btn-p btn-w" onClick={save}>{saved?'Saved ✓':'Save Changes'}</button>
+        {saved&&<span className="tip">Saved ✓</span>}
+      </div>
+      <div className="card a-up d5">
+        <p style={{fontSize:11,fontWeight:600,color:'var(--t3)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:12}}>Account</p>
+        <button className="btn btn-ghost btn-w" style={{marginBottom:9}} onClick={logout}>Sign Out</button>
+        {!confirmClear?(
+          <button className="btn btn-danger btn-w" onClick={()=>setConfirmClear(true)}>Clear My History</button>
+        ):(
+          <div><p style={{fontSize:13,color:'var(--t2)',fontWeight:300,marginBottom:12}}>Delete all check-ins and reset your streak?</p><div className="btn-row"><button className="btn btn-ghost" style={{flex:1}} onClick={()=>setConfirmClear(false)}>Cancel</button><button className="btn btn-danger" style={{flex:1}} onClick={()=>{onClearHistory();setConfirmClear(false);}}>Yes, clear all</button></div></div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Music bar ─────────────────────────────────────────────────────────────
+function MusicBar({playing,vol,modeName,onDown,onUp,onNext}){
+  if(!playing)return null;
+  return(
+    <div className="music-bar">
+      <span className="mbar-mode">{modeName}</span>
+      <button className="mbar-btn" onClick={onDown}>−</button>
+      <span className="mbar-vol">{Math.round(vol*100)}%</span>
+      <button className="mbar-btn" onClick={onUp}>+</button>
+      <button className="mbar-btn" onClick={onNext} style={{color:'var(--orange)',borderColor:'var(--orange-b)',background:'var(--orange-s)',marginLeft:2}}>⟳</button>
+    </div>
+  );
+}
+
+// ── Step bar + Bottom nav ─────────────────────────────────────────────────
+function StepBar({current,onStep}){
+  return(
+    <div className="step-bar">
+      {['Word','Promise','Prayer','Music','Share'].map((name,i)=>(
+        <div key={i} className={`step-seg ${i<current?'done back-nav':i===current?'active':'idle'}`} onClick={()=>i<current&&onStep(i)}>
+          <div className="step-track"/>
+          <span className="step-name">{name}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function BottomNav({active,onNav}){
+  const tabs=[
+    {id:'checkin',label:'Check-In',icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M9 12l2 2 4-4"/></svg>},
+    {id:'history',label:'History',icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8v4l3 3"/><path d="M3.05 11a9 9 0 1 1 .5 4M3 16v-5h5"/></svg>},
+    {id:'settings',label:'Settings',icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>},
+  ];
+  return(
+    <nav className="bot-nav">
+      {tabs.map(t=>(
+        <button key={t.id} className={`bot-tab${active===t.id?' active':''}`} onClick={()=>onNav(t.id)}>
+          {t.icon}<span className="bot-tab-label">{t.label}</span>
+        </button>
+      ))}
+    </nav>
+  );
+}
+
+// ── App ───────────────────────────────────────────────────────────────────
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{"animSpeed":"normal","prayerItalic":true,"showSermon":true}/*EDITMODE-END*/;
+
+function App(){
+  const [navTab,setNavTab]=useState('checkin');
+  const [step,setStep]=useState(0);
+  const [dir,setDir]=useState('fwd');
+  const [feeling,setFeeling]=useState('');
+  const [category,setCategory]=useState('general');
+  const [profile,setProfile]=useState(()=>loadProfile());
+  const [history,setHistory]=useState(()=>loadHistory());
+  const [streak,setStreak]=useState(()=>loadStreak());
+  const [musicPlaying,setMusicPlaying]=useState(false);
+  const [musicVol,setMusicVol]=useState(0.45);
+  const [modeName,setModeName]=useState('Ambient Chords');
+  const [t,setTweak]=useTweaks(TWEAK_DEFAULTS);
+
+  useEffect(()=>{const speeds={fast:'0.2s',normal:'0.36s',slow:'0.58s'};document.documentElement.style.setProperty('--dur',speeds[t.animSpeed]||'0.36s');},[t.animSpeed]);
+
+  // Preload persona images
+  useEffect(()=>{Object.values(PERSONAS).forEach(p=>{const img=new Image();img.crossOrigin='anonymous';img.src=p.img;});},[]);
+
+  function goStep(n){setDir(n>step?'fwd':'back');setStep(n);}
+  function handleCheckIn(word){const cat=categorize(word),ns=updateStreak(),aff=AFFIRMATIONS[cat]||AFFIRMATIONS.general,entry={id:Date.now(),feeling:word,category:cat,categoryLabel:CATEGORIES[cat]?.label||'General',ref:aff.ref,verse:aff.verse,date:new Date().toISOString()},nh=[entry,...history];saveHistory(nh);setHistory(nh);setFeeling(word);setCategory(cat);setStreak(ns);setDir('fwd');setStep(1);}
+  function handleRestart(){setDir('back');setStep(0);setFeeling('');setCategory('general');setNavTab('checkin');}
+  function handleClearHistory(){saveHistory([]);setHistory([]);localStorage.removeItem('promises_streak');setStreak({current:0,longest:0,lastDate:null});}
+  function switchTab(tab){setDir(tab==='checkin'?'back':'fwd');setNavTab(tab);if(tab==='checkin')setStep(0);}
+
+  function toggleMusic(){
+    if(musicPlaying){window.AmbientAudio.stop();setMusicPlaying(false);}
+    else{window.AmbientAudio.start();setMusicPlaying(true);}
+  }
+  function volDown(){const v=Math.max(0.05,musicVol-0.12);setMusicVol(v);window.AmbientAudio.setVol(v);}
+  function volUp(){const v=Math.min(1,musicVol+0.12);setMusicVol(v);window.AmbientAudio.setVol(v);}
+  function nextMusicMode(){const n=window.AmbientAudio.nextMode();setModeName(n);}
+
+  const inFlow=navTab==='checkin'&&step>0;
+
+  return(
+    <div className="app-wrap">
+      <div className="shell">
+        <nav className="nav">
+          {inFlow?(
+            <button className="nav-back" onClick={()=>goStep(step-1)}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+              Back
+            </button>
+          ):(
+            <a href="Landing.html" className="nav-brand">Promises</a>
+          )}
+          <div style={{flex:1,display:'flex',justifyContent:'center'}}>
+            {inFlow&&<span style={{fontSize:13,color:'var(--t2)',fontWeight:300}}>{['Word','Promise','Prayer','Music','Share'][step]}</span>}
+          </div>
+          <div className="nav-right">
+            <button className="music-btn" onClick={toggleMusic}>
+              {musicPlaying?<svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>:<svg viewBox="0 0 24 24"><path d="M8 5.14v14l11-7-11-7z"/></svg>}
+            </button>
+            <div className="avatar" onClick={()=>switchTab('settings')}>{initials(profile?.name)}</div>
+          </div>
+        </nav>
+
+        <MusicBar playing={musicPlaying} vol={musicVol} modeName={modeName} onDown={volDown} onUp={volUp} onNext={nextMusicMode}/>
+        {inFlow&&<StepBar current={step} onStep={goStep}/>}
+        {!profile?.onboardingComplete&&<Onboarding onComplete={p=>{setProfile(p);}}/>}
+
+        <div className="screen-wrap">
+          {navTab==='checkin'&&step===0&&<CheckIn key="ci0" onNext={handleCheckIn} profile={profile} history={history} dir={dir}/>}
+          {navTab==='checkin'&&step===1&&<Affirmation key="ci1" feeling={feeling} category={category} onPrayer={()=>goStep(2)} onMusic={()=>goStep(3)} streak={streak} dir={dir}/>}
+          {navTab==='checkin'&&step===2&&<Prayer key="ci2" category={category} profile={profile} onNext={()=>goStep(3)} dir={dir} tweaks={t}/>}
+          {navTab==='checkin'&&step===3&&<Music key="ci3" category={category} profile={profile} onNext={()=>goStep(4)} musicPlaying={musicPlaying} dir={dir} tweaks={t}/>}
+          {navTab==='checkin'&&step===4&&<Share key="ci4" feeling={feeling} category={category} profile={profile} onRestart={handleRestart} dir={dir}/>}
+          {navTab==='history'&&<History key="hist" history={history} dir={dir}/>}
+          {navTab==='settings'&&<Settings key="sett" profile={profile} onUpdateProfile={p=>setProfile(p)} onClearHistory={handleClearHistory} dir={dir}/>}
+        </div>
+
+        <BottomNav active={inFlow?'checkin':navTab} onNav={switchTab}/>
+      </div>
+
+      <TweaksPanel title="Promises">
+        <TweakSection label="Animation"/>
+        <TweakRadio label="Speed" value={t.animSpeed} options={['fast','normal','slow']} onChange={v=>setTweak('animSpeed',v)}/>
+        <TweakSection label="Prayer"/>
+        <TweakToggle label="Italic body text" value={t.prayerItalic} onChange={v=>setTweak('prayerItalic',v)}/>
+        <TweakSection label="Music Screen"/>
+        <TweakToggle label="Show sermon excerpt" value={t.showSermon} onChange={v=>setTweak('showSermon',v)}/>
+        <TweakSection label="Audio"/>
+        <TweakButton label="Next sound mode" onClick={nextMusicMode}/>
+        <TweakSection label="Debug"/>
+        <TweakButton label="Reset onboarding" secondary onClick={()=>{localStorage.removeItem('promises_profile');window.location.reload();}}/>
+        <TweakButton label="Reset all data" secondary onClick={()=>{localStorage.clear();window.location.reload();}}/>
+      </TweaksPanel>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
 </body>
 </html>
